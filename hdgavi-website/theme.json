@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "color": {
+      "custom": true,
+      "palette": [
+        { "slug": "bg", "color": "#0B0F1A", "name": "Background" },
+        { "slug": "surface", "color": "#111827", "name": "Surface" },
+        { "slug": "text-primary", "color": "#F1F5F9", "name": "Text Primary" },
+        { "slug": "text-secondary", "color": "#94A3B8", "name": "Text Secondary" },
+        { "slug": "accent", "color": "#06B6D4", "name": "Accent Cyan" },
+        { "slug": "accent-2", "color": "#005386", "name": "Accent Dassault Blue" },
+        { "slug": "success", "color": "#22C55E", "name": "Success" },
+        { "slug": "warning", "color": "#F59E0B", "name": "Warning" },
+        { "slug": "danger", "color": "#EF4444", "name": "Danger" }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        { "fontFamily": "'DM Sans', sans-serif", "slug": "dm-sans", "name": "DM Sans" },
+        { "fontFamily": "'Outfit', sans-serif", "slug": "outfit", "name": "Outfit" },
+        { "fontFamily": "'JetBrains Mono', monospace", "slug": "jetbrains-mono", "name": "JetBrains Mono" }
+      ],
+      "fontSizes": [
+        { "slug": "small", "size": "0.8125rem", "name": "Small" },
+        { "slug": "medium", "size": "1rem", "name": "Medium" },
+        { "slug": "large", "size": "1.25rem", "name": "Large" },
+        { "slug": "x-large", "size": "2rem", "name": "Extra Large" }
+      ]
+    },
+    "spacing": {
+      "units": ["px", "em", "rem", "%", "vw"]
+    },
+    "layout": {
+      "contentSize": "720px",
+      "wideSize": "1200px"
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "#0B0F1A",
+      "text": "#F1F5F9"
+    },
+    "typography": {
+      "fontFamily": "'DM Sans', sans-serif",
+      "fontSize": "1rem",
+      "lineHeight": "1.65"
+    },
+    "elements": {
+      "heading": {
+        "typography": {
+          "fontFamily": "'Outfit', sans-serif",
+          "lineHeight": "1.15"
+        }
+      },
+      "link": {
+        "color": {
+          "text": "#06B6D4"
+        }
+      }
+    }
+  }
+}

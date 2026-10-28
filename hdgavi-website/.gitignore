@@ -1,0 +1,14 @@
+# Archives
+*.zip
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (if used for minification)
+node_modules/
+package-lock.json
