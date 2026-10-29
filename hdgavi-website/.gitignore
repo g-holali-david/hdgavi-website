@@ -1,9 +1,6 @@
 # Archives
 *.zip
 
-# Claude Code
-.claude/
-
 # OS
 .DS_Store
 Thumbs.db
