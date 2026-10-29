@@ -1,26 +1,26 @@
 /**
- * HD GAVI Portfolio — Service Worker v6.2.1
+ * HD GAVI Portfolio — Service Worker v7.0.0
  * Optimized cache strategies:
  * - Cache-first for versioned static assets (CSS/JS with ?ver=hash)
- * - Stale-while-revalidate for Google Fonts (long-lived, rarely change)
+ * - Stale-while-revalidate for font files (long-lived, rarely change)
  * - Network-first for HTML pages (always fresh, cache fallback)
  * - Cache size limits to avoid storage bloat
  * - Offline fallback page when both network and cache fail
  */
-var CACHE_STATIC  = 'hdgavi-static-v7.1';
-var CACHE_FONTS   = 'hdgavi-fonts-v1';
-var CACHE_PAGES   = 'hdgavi-pages-v7.1';
+var CACHE_STATIC  = 'hdgavi-static-v8';
+var CACHE_FONTS   = 'hdgavi-fonts-v2';
+var CACHE_PAGES   = 'hdgavi-pages-v8';
 var CACHE_IMAGES  = 'hdgavi-images-v1';
 var ALL_CACHES    = [CACHE_STATIC, CACHE_FONTS, CACHE_PAGES, CACHE_IMAGES];
 var MAX_PAGES     = 30;
 var MAX_IMAGES    = 60;
-var OFFLINE_PAGE  = '/offline.html';
+// Paths are relative to this file (the theme folder), whatever the folder is called.
+var OFFLINE_PAGE  = 'offline.html';
 
 var STATIC_ASSETS = [
-  '/',
   OFFLINE_PAGE,
-  '/wp-content/themes/hdgavi-portfolio/style.min.css',
-  '/wp-content/themes/hdgavi-portfolio/assets/js/theme.min.js',
+  'style.min.css',
+  'assets/js/theme.min.js',
 ];
 
 // Install: pre-cache critical static assets

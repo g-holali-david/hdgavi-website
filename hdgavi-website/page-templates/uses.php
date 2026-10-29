@@ -1,76 +1,59 @@
 <?php
 /**
  * Template Name: Uses / Mon Setup
+ * Tools from the Customizer (uses_cat_N_*). Item syntax: "Tool | Description | URL" per line.
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 get_header();
+
+$groups = array();
+for ( $cat = 1; $cat <= 8; $cat++ ) {
+    $cat_en = hdgavi_opt( "uses_cat_{$cat}_en", '' );
+    $items  = hdgavi_opt( "uses_cat_{$cat}_items", '' );
+    if ( empty( $cat_en ) || empty( $items ) ) continue;
+    $tools = array();
+    foreach ( array_filter( array_map( 'trim', explode( "\n", $items ) ) ) as $line ) {
+        $parts   = array_map( 'trim', explode( '|', $line ) );
+        $tools[] = array(
+            'name' => $parts[0],
+            'desc' => isset( $parts[1] ) ? $parts[1] : '',
+            'url'  => isset( $parts[2] ) ? $parts[2] : '',
+        );
+    }
+    $groups[] = array(
+        'label' => array(
+            'en' => $cat_en,
+            'fr' => hdgavi_opt( "uses_cat_{$cat}_fr", $cat_en ),
+            'es' => hdgavi_opt( "uses_cat_{$cat}_es", $cat_en ),
+        ),
+        'tools' => $tools,
+    );
+}
 ?>
+<section class="sec wrap sec--first" aria-labelledby="t-uses">
+    <h1 class="sec-title" id="t-uses"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_uses_title', 'What I use', 'Ce que j’utilise', 'Lo que uso' ) ); ?></h1>
+    <div class="sec-body">
+        <?php if ( hdgavi_opt( 'show_page_descriptions', true ) ) : ?>
+        <p class="sec-lead"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_uses_desc', 'Software and tools I work with.', 'Les logiciels et outils avec lesquels je travaille.', 'El software y las herramientas con los que trabajo.' ) ); ?></p>
+        <?php endif; ?>
 
-<section class="page-section">
-    <div class="container">
-        <div class="section-header fade-up">
-            <div class="section-label">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_uses_section_en', 'Uses' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_uses_section_fr', 'Mon Setup' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_uses_section_es', 'Mi Configuración' ) ); ?></span>
-            </div>
-            <h1 class="section-title">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_uses_title_en', 'What I use' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_uses_title_fr', 'Ce que j\'utilise' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_uses_title_es', 'Lo que uso' ) ); ?></span>
-            </h1>
-            <?php if ( hdgavi_opt( 'show_page_descriptions', true ) ) : ?>
-            <p class="section-desc">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_uses_desc_en', 'Hardware, software and tools I use daily for development and DevOps.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_uses_desc_fr', 'Matériel, logiciels et outils que j\'utilise au quotidien pour le développement et le DevOps.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_uses_desc_es', 'Hardware, software y herramientas que uso a diario para desarrollo y DevOps.' ) ); ?></span>
-            </p>
-            <?php endif; ?>
-        </div>
-
-        <?php for ( $cat = 1; $cat <= 8; $cat++ ) :
-            $cat_en = hdgavi_opt( "uses_cat_{$cat}_en", '' );
-            if ( empty( $cat_en ) ) continue;
-            $cat_fr    = hdgavi_opt( "uses_cat_{$cat}_fr", $cat_en );
-            $cat_es    = hdgavi_opt( "uses_cat_{$cat}_es", $cat_en );
-            $cat_icon  = hdgavi_opt( "uses_cat_{$cat}_icon", '' );
-            $items     = hdgavi_opt( "uses_cat_{$cat}_items", '' );
-            if ( empty( $items ) ) continue;
-        ?>
-        <div class="uses-category fade-up">
-            <h2 class="uses-cat-title">
-                <?php if ( $cat_icon ) : ?><span class="uses-cat-icon"><?php echo esc_html( $cat_icon ); ?></span><?php endif; ?>
-                <span data-lang="en"><?php echo esc_html( $cat_en ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( $cat_fr ); ?></span>
-                <span data-lang="es"><?php echo esc_html( $cat_es ); ?></span>
-            </h2>
-            <div class="uses-grid">
-                <?php
-                // Format: "Tool Name | Description" per line
-                foreach ( array_filter( array_map( 'trim', explode( "\n", $items ) ) ) as $line ) :
-                    $parts = array_map( 'trim', explode( '|', $line ) );
-                    $tool_name = $parts[0];
-                    $tool_desc = isset( $parts[1] ) ? $parts[1] : '';
-                    $tool_url  = isset( $parts[2] ) ? $parts[2] : '';
-                ?>
-                <div class="uses-item">
-                    <div class="uses-item-name">
-                        <?php if ( $tool_url ) : ?>
-                        <a href="<?php echo esc_url( $tool_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $tool_name ); ?></a>
-                        <?php else : ?>
-                        <?php echo esc_html( $tool_name ); ?>
-                        <?php endif; ?>
-                    </div>
-                    <?php if ( $tool_desc ) : ?>
-                    <div class="uses-item-desc"><?php echo esc_html( $tool_desc ); ?></div>
-                    <?php endif; ?>
-                </div>
+        <?php foreach ( $groups as $group ) : ?>
+        <div class="entry">
+            <h2 class="entry-label"><?php echo hdgavi_tri_arr( $group['label'] ); ?></h2>
+            <ul class="uses-list">
+                <?php foreach ( $group['tools'] as $tool ) : ?>
+                <li>
+                    <span class="uses-item-name"><?php if ( $tool['url'] ) : ?><a href="<?php echo esc_url( $tool['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $tool['name'] ); ?></a><?php else : ?><?php echo esc_html( $tool['name'] ); ?><?php endif; ?></span><?php if ( $tool['desc'] ) : ?><span class="uses-item-desc"> — <?php echo esc_html( $tool['desc'] ); ?></span><?php endif; ?>
+                </li>
                 <?php endforeach; ?>
-            </div>
+            </ul>
         </div>
-        <?php endfor; ?>
+        <?php endforeach; ?>
+
+        <?php if ( ! $groups ) : ?>
+        <p class="sec-lead empty-note"><?php echo hdgavi_tri( 'No tool listed yet.', 'Aucun outil pour le moment.', 'Ninguna herramienta por el momento.' ); ?></p>
+        <?php endif; ?>
     </div>
 </section>
-
 <?php get_footer(); ?>

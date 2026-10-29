@@ -1,13 +1,13 @@
 {
-  "name": "HD GAVI Portfolio",
-  "short_name": "HD GAVI",
-  "description": "Cloud & DevOps Engineering Portfolio — Holali David GAVI",
+  "name": "Holali David GAVI",
+  "short_name": "H. D. GAVI",
+  "description": "Holali David GAVI, ingénieur DevOps / Cloud Native",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0B0F1A",
-  "theme_color": "#06B6D4",
+  "background_color": "#F8F7F3",
+  "theme_color": "#F8F7F3",
   "orientation": "any",
   "icons": [
     {

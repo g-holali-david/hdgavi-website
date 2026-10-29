@@ -1,6 +1,10 @@
 <?php
 /**
- * HD GAVI Portfolio — Customizer: Contact
+ * HD GAVI Portfolio — Customizer: contact form
+ *
+ * 7.0.0: the form label settings were removed, the contact template (template-parts/cv-contact.php)
+ * carries its own trilingual labels.
+ *
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -9,33 +13,17 @@ function hdgavi_customizer_contact( $wp_customize ) {
     $panel = 'hdgavi_panel';
 
     $wp_customize->add_section( 'hdgavi_contact', array(
-        'title'    => __( '8. Contact', 'hdgavi-portfolio' ),
+        'title'    => __( 'Formulaire de contact', 'hdgavi-portfolio' ),
         'panel'    => $panel,
         'priority' => 70,
     ) );
 
-    // Form labels
-    $labels = array(
-        'form_name_en'    => array( 'Your name', 'Label nom (EN)' ),
-        'form_name_fr'    => array( 'Votre nom', 'Label nom (FR)' ),
-        'form_email_en'   => array( 'Your email', 'Label email (EN)' ),
-        'form_email_fr'   => array( 'Votre email', 'Label email (FR)' ),
-        'form_message_en' => array( 'Your message', 'Label message (EN)' ),
-        'form_message_fr' => array( 'Votre message', 'Label message (FR)' ),
-        'form_btn_en'     => array( 'Send', 'Bouton (EN)' ),
-        'form_btn_fr'     => array( 'Envoyer', 'Bouton (FR)' ),
-    );
-    foreach ( $labels as $k => $v ) {
-        $wp_customize->add_setting( $k, array( 'default' => $v[0], 'sanitize_callback' => 'sanitize_text_field' ) );
-        $wp_customize->add_control( $k, array( 'label' => $v[1], 'section' => 'hdgavi_contact' ) );
-    }
-
     // Web3Forms key
     $wp_customize->add_setting( 'web3forms_key', array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ) );
     $wp_customize->add_control( 'web3forms_key', array(
-        'label'       => __( 'Web3Forms Access Key', 'hdgavi-portfolio' ),
+        'label'       => __( 'Clé d’accès Web3Forms', 'hdgavi-portfolio' ),
         'section'     => 'hdgavi_contact',
-        'description' => __( 'Get your key at web3forms.com', 'hdgavi-portfolio' ),
+        'description' => __( 'Clé fournie par web3forms.com, utilisée par le formulaire de contact.', 'hdgavi-portfolio' ),
     ) );
 }
 add_action( 'customize_register', 'hdgavi_customizer_contact' );

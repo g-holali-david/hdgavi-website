@@ -1,420 +1,402 @@
 <?php
 /**
- * HD GAVI Portfolio — Maintenance Mode Page
- * Displayed to non-logged-in visitors when maintenance_mode is ON.
- * Logged-in admins see the normal site.
- * All content is customizable via Customizer → 🚧 Maintenance Page.
+ * HD GAVI Portfolio — maintenance page.
+ *
+ * Shown to visitors who are not logged in while the "maintenance_mode" theme_mod is on
+ * (hdgavi_maintenance_redirect() in functions.php includes this file, then exits).
+ * Standalone document: no wp_head(), nothing loaded from another origin, no animation.
+ * Texts and visible elements: Customizer > Maintenance page (maintenance_*, maint_show_*).
+ *
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-// ── Identity (with fallbacks to general settings) ──
-$name       = esc_html( hdgavi_opt( 'general_name', 'Holali David GAVI' ) );
-$email      = hdgavi_opt( 'general_email', '' );
-$github     = esc_url( hdgavi_opt( 'contact_github', '' ) );
-$linkedin   = esc_url( hdgavi_opt( 'contact_linkedin', '' ) );
-$cv_url     = hdgavi_opt( 'cv_pdf_url', '' ) ? esc_url( home_url( '?hdgavi_cv=download' ) ) : '';
-$phone      = esc_html( hdgavi_opt( 'contact_phone', '' ) );
-$location   = esc_html( hdgavi_opt( 'general_location', '' ) );
-$monogram   = esc_html( hdgavi_opt( 'logo_monogram', 'HD' ) );
-$photo      = esc_url( hdgavi_opt( 'profile_photo', '' ) );
-$lang       = hdgavi_opt( 'default_lang', 'en' );
-$year       = esc_html( hdgavi_opt( 'footer_year', wp_date( 'Y' ) ) );
-
-// ── Role & company (maintenance-specific or fallback) ──
-$role_en  = esc_html( hdgavi_opt( 'maintenance_role_en', '' ) ?: hdgavi_opt( 'seo_job_title', 'DevOps Engineer' ) );
-$role_fr  = esc_html( hdgavi_opt( 'maintenance_role_fr', '' ) ?: hdgavi_opt( 'seo_job_title', 'Ingénieur DevOps' ) );
-$role_es  = esc_html( hdgavi_opt( 'maintenance_role_es', '' ) ?: $role_en );
-$company  = esc_html( hdgavi_opt( 'maintenance_company', '' ) ?: hdgavi_opt( 'seo_company', 'Dassault Systèmes' ) );
-
-// ── Banner texts (trilingue) ──
-$icon      = esc_html( hdgavi_opt( 'maintenance_icon', '🚧' ) );
-$title_en  = hdgavi_opt( 'maintenance_title_en', 'Site under maintenance' );
-$title_fr  = hdgavi_opt( 'maintenance_title_fr', 'Site sous maintenance' );
-$title_es  = hdgavi_opt( 'maintenance_title_es', 'Sitio en mantenimiento' );
-$desc_en   = hdgavi_opt( 'maintenance_desc_en', 'Come back soon!' );
-$desc_fr   = hdgavi_opt( 'maintenance_desc_fr', 'Revenez bientôt !' );
-$desc_es   = hdgavi_opt( 'maintenance_desc_es', '¡Vuelve pronto!' );
-
-// ── Show/hide toggles ──
-$show_banner    = hdgavi_opt( 'maint_show_banner', true );
-$show_photo     = hdgavi_opt( 'maint_show_photo', true );
-$show_role      = hdgavi_opt( 'maint_show_role', true );
-$show_info      = hdgavi_opt( 'maint_show_info', true );
-$show_skills    = hdgavi_opt( 'maint_show_skills', true );
-$show_github    = hdgavi_opt( 'maint_show_github', true );
-$show_linkedin  = hdgavi_opt( 'maint_show_linkedin', true );
-$show_email_link = hdgavi_opt( 'maint_show_email', true );
-$show_cv        = hdgavi_opt( 'maint_show_cv', true );
-$show_form      = hdgavi_opt( 'maint_show_form', true );
-$show_particles = hdgavi_opt( 'maint_show_particles', true );
-$show_lang      = hdgavi_opt( 'maint_show_lang', true );
-
-// ── Skills from CPT ──
-$skills_tags = '';
-if ( $show_skills ) {
-    $maint_skills = hdgavi_get_cpt_posts( 'hdgavi_skill' );
-    foreach ( array_slice( $maint_skills, 0, 8 ) as $ms ) {
-        $sn = get_post_meta( $ms->ID, '_skill_name', true );
-        if ( $sn ) $skills_tags .= '<span class="m-tag">' . esc_html( $sn ) . '</span>';
-    }
+$langs = array( 'en', 'fr', 'es' );
+$lang  = (string) hdgavi_opt( 'default_lang', 'en' );
+if ( ! in_array( $lang, $langs, true ) ) {
+    $lang = 'en';
 }
 
-// Pick role for current lang
-$roles = array( 'en' => $role_en, 'fr' => $role_fr, 'es' => $role_es );
-$role_display = $roles[ $lang ] ?? $role_en;
+/* ── Identity and contact details (same theme_mods as the rest of the site) ── */
+$name     = (string) hdgavi_opt( 'general_name', 'Holali David GAVI' );
+$email    = (string) hdgavi_opt( 'general_email', '' );
+$linkedin = (string) hdgavi_opt( 'contact_linkedin', '' );
+$github   = (string) hdgavi_opt( 'contact_github', '' );
+$cv_pdf   = (string) hdgavi_opt( 'cv_pdf_url', '' );
+$year     = (string) hdgavi_opt( 'footer_year', wp_date( 'Y' ) );
+$company  = trim( (string) hdgavi_opt( 'maintenance_company', '' ) );
+
+/* ── Visible elements ── */
+$show_banner   = (bool) hdgavi_opt( 'maint_show_banner', true );
+$show_role     = (bool) hdgavi_opt( 'maint_show_role', true );
+$show_email    = (bool) hdgavi_opt( 'maint_show_email', true ) && '' !== $email;
+$show_linkedin = (bool) hdgavi_opt( 'maint_show_linkedin', true ) && '' !== $linkedin;
+$show_github   = (bool) hdgavi_opt( 'maint_show_github', true ) && '' !== $github;
+$show_cv       = (bool) hdgavi_opt( 'maint_show_cv', true ) && '' !== $cv_pdf;
+$show_form     = (bool) hdgavi_opt( 'maint_show_form', true );
+$show_lang     = (bool) hdgavi_opt( 'maint_show_lang', true );
+$has_links     = $show_email || $show_linkedin || $show_github || $show_cv;
+
+/* ── Texts ──
+ * maintenance_title_{lang}, maintenance_desc_{lang} and maintenance_role_{lang} override the
+ * defaults below. Up to v6 the dashboard pre-filled these fields with the old defaults, so a stored
+ * value equal to an old default counts as "not customised" and gets the current default. */
+$defaults = array(
+    'title' => array(
+        'en' => 'This site is being updated',
+        'fr' => 'Ce site est en cours de mise à jour',
+        'es' => 'Este sitio se está actualizando',
+    ),
+    'desc'  => array(
+        'en' => 'The site will be back online shortly. In the meantime, you can contact me using the details below.',
+        'fr' => 'Le site sera de nouveau accessible prochainement. En attendant, vous pouvez me contacter aux coordonnées ci-dessous.',
+        'es' => 'El sitio volverá a estar disponible próximamente. Mientras tanto, puede contactarme a través de los datos indicados a continuación.',
+    ),
+);
+$legacy = array(
+    'title' => array( 'en' => 'Site under maintenance', 'fr' => 'Site sous maintenance', 'es' => 'Sitio en mantenimiento' ),
+    'desc'  => array( 'en' => 'Come back soon!', 'fr' => 'Revenez bientôt !', 'es' => '¡Vuelve pronto!' ),
+);
+$cv_role = hdgavi_cv( 'role' );
+$t       = array( 'title' => array(), 'desc' => array(), 'role' => array() );
+foreach ( $langs as $l ) {
+    foreach ( array( 'title', 'desc' ) as $k ) {
+        $v             = trim( (string) hdgavi_opt( 'maintenance_' . $k . '_' . $l, '' ) );
+        $t[ $k ][ $l ] = ( '' === $v || $v === $legacy[ $k ][ $l ] ) ? $defaults[ $k ][ $l ] : $v;
+    }
+    $role            = trim( (string) hdgavi_opt( 'maintenance_role_' . $l, '' ) );
+    $t['role'][ $l ] = ( '' !== $role ) ? $role : $cv_role[ $l ];
+}
+
+$ui = array(
+    'skip'    => array( 'en' => 'Skip to content', 'fr' => 'Aller au contenu', 'es' => 'Ir al contenido' ),
+    'langs'   => array( 'en' => 'Language', 'fr' => 'Langue', 'es' => 'Idioma' ),
+    'email'   => hdgavi_cv_label( 'email' ),
+    'cv'      => hdgavi_cv_label( 'cv' ),
+    'write'   => hdgavi_cv_label( 'write_me' ),
+    'name'    => array( 'en' => 'Name', 'fr' => 'Nom', 'es' => 'Nombre' ),
+    'email_f' => array( 'en' => 'E-mail', 'fr' => 'E-mail', 'es' => 'Correo electrónico' ),
+    'message' => array( 'en' => 'Message', 'fr' => 'Message', 'es' => 'Mensaje' ),
+    'send'    => array( 'en' => 'Send', 'fr' => 'Envoyer', 'es' => 'Enviar' ),
+);
+
+/**
+ * Escaped text in the three languages (one <span data-lang> each; CSS shows the one matching
+ * html[lang]). Without the language switch only the default language is printed.
+ */
+$tri = function ( $texts ) use ( $langs, $lang, $show_lang ) {
+    if ( ! $show_lang || 1 === count( array_unique( array_values( $texts ) ) ) ) {
+        return esc_html( isset( $texts[ $lang ] ) ? $texts[ $lang ] : '' );
+    }
+    $out = '';
+    foreach ( $langs as $l ) {
+        $out .= '<span data-lang="' . $l . '">' . esc_html( isset( $texts[ $l ] ) ? $texts[ $l ] : '' ) . '</span>';
+    }
+    return $out;
+};
+$strip = function ( $url ) {
+    return preg_replace( '#^https?://(www\.)?#', '', untrailingslashit( $url ) );
+};
+
+$cv_file = $show_cv ? wp_basename( (string) wp_parse_url( $cv_pdf, PHP_URL_PATH ) ) : '';
+if ( $show_cv && '' === $cv_file ) {
+    $cv_file = 'PDF';
+}
+
+$js_data = array(
+    'lang'  => $lang,
+    'ajax'  => admin_url( 'admin-ajax.php' ),
+    'title' => array(),
+    'msg'   => array(
+        'sending' => array( 'en' => 'Sending…', 'fr' => 'Envoi en cours…', 'es' => 'Enviando…' ),
+        'ok'      => array( 'en' => 'Your message has been sent.', 'fr' => 'Votre message a bien été envoyé.', 'es' => 'Su mensaje ha sido enviado.' ),
+        'fields'  => array( 'en' => 'Please fill in all the fields.', 'fr' => 'Veuillez remplir tous les champs.', 'es' => 'Complete todos los campos, por favor.' ),
+        'email'   => array( 'en' => 'This e-mail address is not valid.', 'fr' => 'Cette adresse e-mail n’est pas valide.', 'es' => 'Esta dirección de correo no es válida.' ),
+        'error'   => array( 'en' => 'The message could not be sent. Please try again, or write to me by e-mail.', 'fr' => 'Le message n’a pas pu être envoyé. Réessayez ou écrivez-moi par e-mail.', 'es' => 'No se pudo enviar el mensaje. Inténtelo de nuevo o escríbame por correo.' ),
+        'timeout' => array( 'en' => 'The server took too long to respond. Please try again.', 'fr' => 'Le serveur a mis trop de temps à répondre. Réessayez.', 'es' => 'El servidor tardó demasiado en responder. Inténtelo de nuevo.' ),
+    ),
+);
+foreach ( $langs as $l ) {
+    $js_data['title'][ $l ] = $name . ' — ' . $t['title'][ $l ];
+}
+
+$font_dir = get_template_directory_uri() . '/assets/fonts/';
 
 status_header( 503 );
 header( 'Retry-After: 86400' );
 ?>
 <!DOCTYPE html>
-<html <?php language_attributes(); ?> data-theme="dark">
+<html lang="<?php echo esc_attr( $lang ); ?>">
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0B0F1A">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title><?php echo $name; ?> — <?php $titles = array( 'en' => $title_en, 'fr' => $title_fr, 'es' => $title_es ); echo esc_html( $titles[ $lang ] ?? $title_en ); ?></title>
-<meta name="description" content="<?php $descs = array( 'en' => $desc_en, 'fr' => $desc_fr, 'es' => $desc_es ); echo esc_attr( $descs[ $lang ] ?? $desc_en ); ?>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F8F7F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1F1E1B" media="(prefers-color-scheme: dark)">
+<title><?php echo esc_html( $js_data['title'][ $lang ] ); ?></title>
+<meta name="description" content="<?php echo esc_attr( $t['desc'][ $lang ] ); ?>">
+<?php if ( function_exists( 'wp_site_icon' ) ) wp_site_icon(); ?>
+<script>
+(function (h) {
+    h.className = 'js';
+<?php if ( $show_lang ) : ?>
+    try {
+        var l = localStorage.getItem('hdgavi_lang');
+        if (l === 'en' || l === 'fr' || l === 'es') h.setAttribute('lang', l);
+    } catch (e) {}
+<?php endif; ?>
+})(document.documentElement);
+</script>
+<link rel="preload" href="<?php echo esc_url( $font_dir . 'ibm-plex-sans-latin-400-normal.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<?php echo esc_url( $font_dir . 'ibm-plex-serif-latin-500-normal.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0B0F1A;--surface:#111827;--border:rgba(255,255,255,0.06);--text:#F1F5F9;--text-2:#94A3B8;--text-3:#64748B;--accent:#06B6D4;--accent-hover:#0891B2;--accent-bg:rgba(6,182,212,0.08);--accent2:#2d8ec9}
-html{font-size:16px}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-#mc{position:fixed;inset:0;z-index:0;pointer-events:none}
-.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.page{position:relative;z-index:2;padding:40px 24px;width:100%;max-width:560px}
-.m-banner{text-align:center;margin-bottom:32px;opacity:0;transform:translateY(16px);animation:up .6s ease forwards}
-.m-banner-icon{font-size:2.4rem;margin-bottom:12px}
-.m-banner h1{font-family:'Outfit',sans-serif;font-size:clamp(1.4rem,3vw,1.7rem);font-weight:800;letter-spacing:-0.02em;margin-bottom:8px}
-.m-banner p{font-size:0.95rem;color:var(--text-2);line-height:1.6}
-.m-term{background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:1.8;color:var(--text-2);opacity:0;transform:translateY(16px);animation:up .6s ease .1s forwards;overflow:hidden}
-.m-term-dots{display:flex;gap:6px;margin-bottom:14px}
-.m-term-dots span{width:10px;height:10px;border-radius:50%}
-.m-term-dots span:nth-child(1){background:#EF4444}
-.m-term-dots span:nth-child(2){background:#F59E0B}
-.m-term-dots span:nth-child(3){background:#22C55E}
-.m-term .t-cmd{color:var(--accent)}
-.m-term .t-out{color:var(--text-2)}
-.m-card{background:var(--surface);border:0.5px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);opacity:0;transform:translateY(24px);animation:up .7s ease .15s forwards}
-@keyframes up{to{opacity:1;transform:translateY(0)}}
-.m-header{background:linear-gradient(135deg,#0B0F1A,#111827);padding:28px 32px 24px;border-bottom:3px solid;border-image:linear-gradient(90deg,var(--accent),var(--accent2)) 1;display:flex;align-items:center;gap:20px}
-.m-avatar{width:64px;height:64px;border-radius:16px;overflow:hidden;flex-shrink:0;border:2px solid rgba(6,182,212,0.2)}
-.m-avatar img{width:100%;height:100%;object-fit:cover}
-.m-avatar-fallback{width:100%;height:100%;background:rgba(6,182,212,0.12);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:700;font-size:18px;color:var(--accent);letter-spacing:0.5px}
-.m-identity h2{font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;letter-spacing:-0.01em}
-.m-identity .m-role{font-size:0.8rem;color:var(--accent);font-weight:500;margin-top:2px}
-.m-identity .m-company{font-size:0.75rem;color:var(--text-3);margin-top:2px}
-.m-body{padding:28px 32px}
-.m-label{font-family:'Outfit',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.m-label::before{content:'';width:14px;height:1px;background:var(--accent)}
-.m-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
-.m-info-item{padding:12px 14px;background:rgba(255,255,255,0.02);border:0.5px solid var(--border);border-radius:10px;transition:all .25s}
-.m-info-item:hover{border-color:rgba(6,182,212,0.2);background:var(--accent-bg)}
-.m-info-k{font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);margin-bottom:3px}
-.m-info-v{font-weight:600;font-size:0.8rem}
-.m-info-item.full{grid-column:1/-1}
-.m-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
-.m-tag{padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:500;background:var(--accent-bg);color:var(--accent);border:0.5px solid rgba(6,182,212,0.15)}
-.m-socials{display:flex;gap:8px;margin-bottom:20px}
-.m-soc{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:12px;border:0.5px solid var(--border);color:var(--text-2);font-size:0.78rem;font-weight:600;text-decoration:none;transition:all .25s;min-height:44px}
-.m-soc:hover{color:var(--accent);border-color:rgba(6,182,212,0.3);background:var(--accent-bg);transform:translateY(-2px)}
-.m-soc svg{width:15px;height:15px;flex-shrink:0}
-.m-cv{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:50px;background:var(--accent);color:#0B0F1A;font-weight:700;font-size:0.85rem;text-decoration:none;transition:all .25s;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(6,182,212,0.25);margin-bottom:24px}
-.m-cv:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 8px 30px rgba(6,182,212,0.35)}
-.m-cv svg{width:16px;height:16px}
-.m-form-group{margin-bottom:10px}
-.m-form-group label{display:block;font-size:0.68rem;font-weight:600;color:var(--text-3);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em}
-.m-form-group input,.m-form-group textarea{width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:0.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;transition:all .25s}
-.m-form-group input:focus,.m-form-group textarea:focus{border-color:var(--accent);background:var(--accent-bg)}
-.m-form-group textarea{resize:vertical;min-height:72px}
-.m-send{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;border-radius:50px;background:transparent;border:1px solid var(--border);color:var(--text-2);font-weight:600;font-size:0.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .25s}
-.m-send:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
-.m-send svg{width:14px;height:14px}
-.m-fb{margin-top:8px;padding:9px 14px;border-radius:10px;font-size:0.78rem;font-weight:500;display:none;text-align:center}
-.m-fb.ok{display:block;background:rgba(34,197,94,0.1);color:#22C55E;border:0.5px solid rgba(34,197,94,0.2)}
-.m-fb.err{display:block;background:rgba(239,68,68,0.1);color:#EF4444;border:0.5px solid rgba(239,68,68,0.2)}
-.m-footer{padding:16px 32px;border-top:0.5px solid var(--border);text-align:center;font-size:0.65rem;color:var(--text-3);font-family:'JetBrains Mono',monospace}
-@media(max-width:520px){
-  .m-header{flex-direction:column;text-align:center;padding:24px 20px}
-  .m-body{padding:24px 20px}
-  .m-footer{padding:14px 20px}
-  .m-info{grid-template-columns:1fr}
-  .m-socials{flex-direction:column}
-  .m-banner h1{font-size:1.25rem}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:400;font-display:swap;src:url("<?php echo esc_url( $font_dir . 'ibm-plex-sans-latin-400-normal.woff2' ); ?>") format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:500;font-display:swap;src:url("<?php echo esc_url( $font_dir . 'ibm-plex-sans-latin-500-normal.woff2' ); ?>") format("woff2")}
+@font-face{font-family:"IBM Plex Serif";font-style:normal;font-weight:500;font-display:swap;src:url("<?php echo esc_url( $font_dir . 'ibm-plex-serif-latin-500-normal.woff2' ); ?>") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:400;font-display:swap;src:url("<?php echo esc_url( $font_dir . 'ibm-plex-mono-latin-400-normal.woff2' ); ?>") format("woff2")}
+:root{
+  --paper:#F8F7F3;--ink:#1C1C1A;--ink-2:#46453F;--ink-3:#69675F;
+  --rule:#DAD7CF;--rule-strong:#AEAAA0;
+  --accent:#2A5878;--accent-hover:#1E4460;--accent-line:#A3B6C5;--on-accent:#FFFFFF;
+  --field:#FFFFFF;--selection:#DFE6EB;--ok:#2F6B3A;--err:#9B2C2C;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
 }
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}#mc{display:none}}
-@media print{.grain,#mc{display:none!important}body{background:#fff;color:#000}.m-card{box-shadow:none;border:1px solid #ddd}.m-header{background:#f9f9f9}}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#1F1E1B;--ink:#ECE6DA;--ink-2:#C8C1B3;--ink-3:#9D978B;
+    --rule:#3A3833;--rule-strong:#5C5850;
+    --accent:#93B6D2;--accent-hover:#B9D0E2;--accent-line:#536B7D;--on-accent:#16222B;
+    --field:#262521;--selection:#3B4A55;--ok:#9CCBA5;--err:#E8A6A6;
+    color-scheme:dark;
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--paper);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1.0625rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,p,dl,dd{margin:0}
+a{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:var(--accent-line)}
+a:hover{color:var(--accent-hover);text-decoration-color:currentColor}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+::selection{background:var(--selection);color:var(--ink)}
+[data-lang]{display:none}
+html[lang="en"] [data-lang="en"],html[lang="fr"] [data-lang="fr"],html[lang="es"] [data-lang="es"]{display:inline}
+.vh{position:absolute !important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:1rem;top:-4rem;padding:.5rem .75rem;background:var(--ink);color:var(--paper);text-decoration:none}
+.skip:focus{top:1rem;color:var(--paper)}
+.page{width:min(40rem,calc(100% - 2rem));margin:0 auto;padding:.75rem 0 2.5rem}
+.m-lang{display:flex;justify-content:flex-end;gap:.25rem}
+html:not(.js) .m-lang{visibility:hidden}
+.m-lang button{min-width:2.25rem;min-height:2.75rem;padding:.5rem .35rem;border:0;background:none;color:var(--ink-2);font:400 .9375rem/1 var(--sans);cursor:pointer}
+.m-lang button:hover{color:var(--accent-hover)}
+.m-lang button[aria-pressed="true"]{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.4em}
+.m-head{margin-top:clamp(2rem,9vh,5.5rem)}
+.m-name{font-family:var(--serif);font-weight:500;font-size:2.75rem;line-height:1.08;letter-spacing:-.015em;color:var(--ink)}
+.caps{letter-spacing:.04em}
+.m-role{margin-top:.6rem;font-size:1.1875rem;line-height:1.45;color:var(--ink-2)}
+.m-org{margin-top:.15rem;color:var(--ink-3)}
+.m-sec{margin-top:2.75rem;padding-top:2rem;border-top:1px solid var(--rule)}
+.m-sec > :first-child{margin-top:0}
+.m-title{font-family:var(--serif);font-weight:500;font-size:1.5rem;line-height:1.25;color:var(--ink)}
+.m-text{margin-top:.75rem;max-width:36rem}
+.m-coords{display:grid;row-gap:.7rem;margin-top:1.75rem}
+.m-coords > div{display:grid;grid-template-columns:6.5rem minmax(0,1fr);column-gap:1.5rem;align-items:baseline}
+.m-coords dt{font-size:.9375rem;color:var(--ink-3)}
+.m-coords a{overflow-wrap:anywhere}
+.m-label{font-family:var(--mono);font-weight:400;font-size:.875rem;line-height:1.5;color:var(--ink-2)}
+.m-form{margin-top:1.25rem}
+.m-hp{display:none}
+.m-field{display:grid;gap:.35rem;margin-bottom:1.1rem}
+.m-field label{font-size:.9375rem;color:var(--ink-2)}
+.m-field input,.m-field textarea{width:100%;min-height:2.75rem;margin:0;padding:.55rem .75rem;border:1px solid var(--rule-strong);border-radius:2px;background:var(--field);color:var(--ink);font:400 1rem/1.4 var(--sans);-webkit-appearance:none;appearance:none}
+.m-field textarea{min-height:8rem;resize:vertical}
+.m-field input:focus,.m-field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.m-btn{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:0 1.125rem;border:1px solid var(--accent);border-radius:2px;background:var(--accent);color:var(--on-accent);font:500 1rem/1.2 var(--sans);cursor:pointer}
+.m-btn:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.m-btn[disabled]{opacity:.6;cursor:default}
+.m-fb{margin-top:.75rem;font-size:.9375rem;color:var(--ink-2)}
+.m-fb:empty{display:none}
+.m-fb.ok{color:var(--ok)}
+.m-fb.err{color:var(--err)}
+.m-foot{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--rule);font-size:.9375rem;color:var(--ink-3)}
+@media (max-width:760px){
+  body{font-size:1rem}
+  .m-name{font-size:2rem}
+  .m-role{font-size:1.0625rem}
+  .m-sec{margin-top:2.25rem;padding-top:1.5rem}
+  .m-title{font-size:1.3125rem}
+  .m-coords{row-gap:1rem}
+  .m-coords > div{display:block}
+  .m-coords dd{margin-top:.1rem}
+}
 </style>
 </head>
 <body>
-
-<?php if ( $show_particles ) : ?>
-<canvas id="mc"></canvas>
-<?php endif; ?>
-<div class="grain"></div>
+<a class="skip" href="#m-main"><?php echo $tri( $ui['skip'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in $tri ?></a>
 
 <div class="page">
 
-  <?php if ( $show_banner ) : ?>
-  <!-- BANNER -->
-  <div class="m-banner">
-    <div class="m-banner-icon"><?php echo $icon; ?></div>
-    <h1>
-      <span data-lang="en"><?php echo esc_html( $title_en ); ?></span>
-      <span data-lang="fr" style="display:none"><?php echo esc_html( $title_fr ); ?></span>
-      <span data-lang="es" style="display:none"><?php echo esc_html( $title_es ); ?></span>
-    </h1>
-    <p>
-      <span data-lang="en"><?php echo esc_html( $desc_en ); ?></span>
-      <span data-lang="fr" style="display:none"><?php echo esc_html( $desc_fr ); ?></span>
-      <span data-lang="es" style="display:none"><?php echo esc_html( $desc_es ); ?></span>
-    </p>
-  </div>
-  <?php endif; ?>
-
-  <!-- MINI TERMINAL -->
-  <div class="m-term">
-    <div class="m-term-dots"><span></span><span></span><span></span></div>
-    <div id="mTermOutput"></div>
-  </div>
-
-  <!-- CARD -->
-  <div class="m-card">
-
-    <div class="m-header">
-      <?php if ( $show_photo ) : ?>
-      <div class="m-avatar">
-        <?php if ( $photo ) : ?>
-          <img src="<?php echo $photo; ?>" alt="<?php echo $name; ?>">
-        <?php else : ?>
-          <div class="m-avatar-fallback"><?php echo $monogram; ?></div>
-        <?php endif; ?>
-      </div>
-      <?php endif; ?>
-      <div class="m-identity">
-        <h2><?php echo $name; ?></h2>
-        <?php if ( $show_role ) : ?>
-        <div class="m-role">
-          <span data-lang="en"><?php echo esc_html( $role_en ); ?></span>
-          <span data-lang="fr" style="display:none"><?php echo esc_html( $role_fr ); ?></span>
-          <span data-lang="es" style="display:none"><?php echo esc_html( $role_es ); ?></span>
-        </div>
-        <div class="m-company">@ <?php echo $company; ?></div>
-        <?php endif; ?>
-      </div>
-    </div>
-
-    <div class="m-body">
-
-      <?php if ( $show_info ) : ?>
-      <!-- Info -->
-      <div class="m-label">
-        <span data-lang="en">About</span>
-        <span data-lang="fr" style="display:none">Infos</span>
-        <span data-lang="es" style="display:none">Información</span>
-      </div>
-      <div class="m-info">
-        <div class="m-info-item">
-          <div class="m-info-k">
-            <span data-lang="en">Role</span>
-            <span data-lang="fr" style="display:none">Poste</span>
-            <span data-lang="es" style="display:none">Puesto</span>
-          </div>
-          <div class="m-info-v">
-            <span data-lang="en"><?php echo esc_html( $role_en ); ?></span>
-            <span data-lang="fr" style="display:none"><?php echo esc_html( $role_fr ); ?></span>
-            <span data-lang="es" style="display:none"><?php echo esc_html( $role_es ); ?></span>
-          </div>
-        </div>
-        <div class="m-info-item">
-          <div class="m-info-k">
-            <span data-lang="en">Company</span>
-            <span data-lang="fr" style="display:none">Entreprise</span>
-            <span data-lang="es" style="display:none">Empresa</span>
-          </div>
-          <div class="m-info-v"><?php echo $company; ?></div>
-        </div>
-        <?php if ( $location ) : ?>
-        <div class="m-info-item">
-          <div class="m-info-k">
-            <span data-lang="en">Location</span>
-            <span data-lang="fr" style="display:none">Localisation</span>
-            <span data-lang="es" style="display:none">Ubicación</span>
-          </div>
-          <div class="m-info-v"><?php echo $location; ?></div>
-        </div>
-        <?php endif; ?>
-        <?php if ( $phone ) : ?>
-        <div class="m-info-item">
-          <div class="m-info-k">
-            <span data-lang="en">Phone</span>
-            <span data-lang="fr" style="display:none">Téléphone</span>
-            <span data-lang="es" style="display:none">Teléfono</span>
-          </div>
-          <div class="m-info-v"><a href="tel:<?php echo esc_attr( str_replace( ' ', '', $phone ) ); ?>" style="color:var(--text);text-decoration:none"><?php echo $phone; ?></a></div>
-        </div>
-        <?php endif; ?>
-      </div>
-      <?php endif; ?>
-
-      <?php if ( $show_skills && $skills_tags ) : ?>
-      <!-- Skills tags -->
-      <div class="m-label">Stack</div>
-      <div class="m-tags"><?php echo $skills_tags; ?></div>
-      <?php endif; ?>
-
-      <?php if ( ( $show_github && $github ) || ( $show_linkedin && $linkedin ) || ( $show_email_link && $email ) ) : ?>
-      <!-- Socials -->
-      <div class="m-label">
-        <span data-lang="en">Links</span>
-        <span data-lang="fr" style="display:none">Liens</span>
-        <span data-lang="es" style="display:none">Enlaces</span>
-      </div>
-      <div class="m-socials">
-        <?php if ( $show_github && $github ) : ?>
-        <a href="<?php echo $github; ?>" target="_blank" rel="noopener" class="m-soc">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-          GitHub
-        </a>
-        <?php endif; ?>
-        <?php if ( $show_linkedin && $linkedin ) : ?>
-        <a href="<?php echo $linkedin; ?>" target="_blank" rel="noopener" class="m-soc">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
-          LinkedIn
-        </a>
-        <?php endif; ?>
-        <?php if ( $show_email_link && $email ) : ?>
-        <a href="mailto:<?php echo esc_attr( $email ); ?>" class="m-soc">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-          Email
-        </a>
-        <?php endif; ?>
-      </div>
-      <?php endif; ?>
-
-      <?php if ( $show_cv && $cv_url ) : ?>
-      <!-- CV -->
-      <a href="<?php echo $cv_url; ?>" target="_blank" rel="noopener" class="m-cv">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-        <span data-lang="en">Download my CV</span>
-        <span data-lang="fr" style="display:none">Télécharger mon CV</span>
-        <span data-lang="es" style="display:none">Descargar mi CV</span>
-      </a>
-      <?php endif; ?>
-
-      <?php if ( $show_form ) : ?>
-      <!-- Contact form -->
-      <div class="m-label">
-        <span data-lang="en">Write to me</span>
-        <span data-lang="fr" style="display:none">M'écrire</span>
-        <span data-lang="es" style="display:none">Escríbeme</span>
-      </div>
-      <form id="mForm">
-        <div style="display:none" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
-        <div class="m-form-group">
-          <label for="mf-name">
-            <span data-lang="en">Name</span>
-            <span data-lang="fr" style="display:none">Nom</span>
-            <span data-lang="es" style="display:none">Nombre</span>
-          </label>
-          <input type="text" id="mf-name" required>
-        </div>
-        <div class="m-form-group">
-          <label for="mf-email">Email</label>
-          <input type="email" id="mf-email" required>
-        </div>
-        <div class="m-form-group">
-          <label for="mf-msg">Message</label>
-          <textarea id="mf-msg" required></textarea>
-        </div>
-        <button type="submit" class="m-send">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-          <span data-lang="en">Send</span>
-          <span data-lang="fr" style="display:none">Envoyer</span>
-          <span data-lang="es" style="display:none">Enviar</span>
-        </button>
-        <div class="m-fb" id="mFb"></div>
-      </form>
-      <?php endif; ?>
-
-    </div>
-
-    <div class="m-footer">&copy; <?php echo $year . ' ' . $name; ?></div>
-  </div>
-
   <?php if ( $show_lang ) : ?>
-  <!-- Language toggle -->
-  <div style="text-align:center;margin-top:20px;opacity:0;animation:up .6s ease .3s forwards">
-    <button id="mLang" style="background:var(--accent-bg);border:0.5px solid rgba(6,182,212,0.2);color:var(--accent);padding:6px 16px;border-radius:50px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .25s" onmouseover="this.style.background='rgba(6,182,212,0.15)'" onmouseout="this.style.background='var(--accent-bg)'"><?php echo strtoupper( $lang ); ?></button>
-  </div>
+  <nav class="m-lang" id="mLang" aria-labelledby="m-lang-label">
+    <span class="vh" id="m-lang-label"><?php echo $tri( $ui['langs'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+    <button type="button" data-set-lang="fr" lang="fr" aria-label="Français" aria-pressed="<?php echo 'fr' === $lang ? 'true' : 'false'; ?>">FR</button>
+    <button type="button" data-set-lang="en" lang="en" aria-label="English" aria-pressed="<?php echo 'en' === $lang ? 'true' : 'false'; ?>">EN</button>
+    <button type="button" data-set-lang="es" lang="es" aria-label="Español" aria-pressed="<?php echo 'es' === $lang ? 'true' : 'false'; ?>">ES</button>
+  </nav>
   <?php endif; ?>
+
+  <header class="m-head">
+    <h1 class="m-name"><?php echo hdgavi_name_html( $name ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the helper ?></h1>
+    <?php if ( $show_role ) : ?>
+    <p class="m-role"><?php echo $tri( $t['role'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
+    <?php if ( '' !== $company ) : ?>
+    <p class="m-org"><?php echo esc_html( $company ); ?></p>
+    <?php endif; ?>
+    <?php endif; ?>
+  </header>
+
+  <main id="m-main">
+    <?php if ( $show_banner || $has_links ) : ?>
+    <section class="m-sec"<?php echo $show_banner ? ' aria-labelledby="m-status"' : ''; ?>>
+      <?php if ( $show_banner ) : ?>
+      <h2 class="m-title" id="m-status"><?php echo $tri( $t['title'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h2>
+      <p class="m-text"><?php echo $tri( $t['desc'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
+      <?php endif; ?>
+
+      <?php if ( $has_links ) : ?>
+      <dl class="m-coords">
+        <?php if ( $show_email ) : ?>
+        <div>
+          <dt><?php echo $tri( $ui['email'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></dt>
+          <dd><a href="mailto:<?php echo esc_attr( antispambot( $email ) ); ?>"><?php echo esc_html( antispambot( $email ) ); ?></a></dd>
+        </div>
+        <?php endif; ?>
+        <?php if ( $show_linkedin ) : ?>
+        <div>
+          <dt>LinkedIn</dt>
+          <dd><a href="<?php echo esc_url( $linkedin ); ?>" rel="me noopener"><?php echo esc_html( $strip( $linkedin ) ); ?></a></dd>
+        </div>
+        <?php endif; ?>
+        <?php if ( $show_github ) : ?>
+        <div>
+          <dt>GitHub</dt>
+          <dd><a href="<?php echo esc_url( $github ); ?>" rel="me noopener"><?php echo esc_html( $strip( $github ) ); ?></a></dd>
+        </div>
+        <?php endif; ?>
+        <?php if ( $show_cv ) : ?>
+        <div>
+          <dt><?php echo $tri( $ui['cv'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></dt>
+          <dd><a href="<?php echo esc_url( home_url( '/?hdgavi_cv=preview' ) ); ?>" target="_blank" rel="noopener" type="application/pdf"><?php echo esc_html( $cv_file ); ?></a></dd>
+        </div>
+        <?php endif; ?>
+      </dl>
+      <?php endif; ?>
+    </section>
+    <?php endif; ?>
+
+    <?php if ( $show_form ) : ?>
+    <section class="m-sec" aria-labelledby="m-write">
+      <h2 class="m-label" id="m-write"><?php echo $tri( $ui['write'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h2>
+      <form class="m-form" id="mForm">
+        <div class="m-hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+        <div class="m-field">
+          <label for="mf-name"><?php echo $tri( $ui['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></label>
+          <input type="text" id="mf-name" name="name" autocomplete="name" required>
+        </div>
+        <div class="m-field">
+          <label for="mf-email"><?php echo $tri( $ui['email_f'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></label>
+          <input type="email" id="mf-email" name="email" autocomplete="email" required>
+        </div>
+        <div class="m-field">
+          <label for="mf-msg"><?php echo $tri( $ui['message'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></label>
+          <textarea id="mf-msg" name="message" required></textarea>
+        </div>
+        <button type="submit" class="m-btn"><?php echo $tri( $ui['send'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
+        <p class="m-fb" id="mFb" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+    <?php endif; ?>
+  </main>
+
+  <footer class="m-foot">
+    <p>&copy; <?php echo esc_html( $year . ' ' . $name ); ?></p>
+  </footer>
 
 </div>
 
 <script>
-(function(){
-'use strict';
+(function () {
+  'use strict';
+  var C = <?php echo wp_json_encode( $js_data, JSON_HEX_TAG | JSON_HEX_AMP ); ?>;
+  var html = document.documentElement;
 
-<?php if ( $show_particles ) : ?>
-/* Particles */
-var c=document.getElementById('mc'),x=c.getContext('2d'),pts=[],aid;
-function rez(){c.width=innerWidth;c.height=innerHeight;pts=[];var n=Math.floor(c.width*c.height/20000);for(var i=0;i<n;i++)pts.push({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.2+.4})}
-function draw(){x.clearRect(0,0,c.width,c.height);for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);x.fillStyle='rgba(6,182,212,0.2)';x.fill();for(var j=i+1;j<pts.length;j++){var dx=p.x-pts[j].x,dy=p.y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<100){x.beginPath();x.moveTo(p.x,p.y);x.lineTo(pts[j].x,pts[j].y);x.strokeStyle='rgba(6,182,212,'+(0.06*(1-d/100)).toFixed(3)+')';x.stroke()}}}aid=requestAnimationFrame(draw)}
-if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion:reduce)').matches){rez();addEventListener('resize',rez);draw()}
-<?php endif; ?>
+  function lang() {
+    var l = html.getAttribute('lang');
+    return (l === 'en' || l === 'fr' || l === 'es') ? l : C.lang;
+  }
+  function msg(key) {
+    return C.msg[key][lang()] || C.msg[key].en;
+  }
+  function sync() {
+    var l = lang(), btns = document.querySelectorAll('[data-set-lang]');
+    if (C.title[l]) document.title = C.title[l];
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-set-lang') === l ? 'true' : 'false');
+    }
+  }
 
-/* Mini terminal animation */
-(function(){
-  var out=document.getElementById('mTermOutput');
-  if(!out)return;
-  var lines=<?php echo wp_json_encode( hdgavi_get_terminal_lines()[ $lang ] ?? array() ); ?>;
-  var speed=40;
-  function type(text,el){return new Promise(function(r){var i=0;(function t(){if(i<text.length){el.textContent+=text[i];i++;setTimeout(t,speed+Math.random()*15)}else r()})()})}
-  function run(idx){
-    if(idx>=lines.length)return;
-    var cmd=document.createElement('div');cmd.className='t-cmd';out.appendChild(cmd);
-    type(lines[idx].cmd,cmd).then(function(){
-      if(lines[idx].out){var o=document.createElement('div');o.className='t-out';o.textContent=lines[idx].out;out.appendChild(o)}
-      setTimeout(function(){run(idx+1)},400);
+  /* Language switch: same storage key as the rest of the site */
+  var langBtns = document.querySelectorAll('[data-set-lang]');
+  for (var i = 0; i < langBtns.length; i++) {
+    langBtns[i].addEventListener('click', function () {
+      var l = this.getAttribute('data-set-lang');
+      html.setAttribute('lang', l);
+      try { localStorage.setItem('hdgavi_lang', l); } catch (e) {}
+      sync();
     });
   }
-  run(0);
-})();
+  sync();
 
-<?php if ( $show_lang ) : ?>
-/* Language toggle — cycle EN → FR → ES → EN */
-var langs=['en','fr','es'],langIdx=langs.indexOf('<?php echo esc_js( $lang ); ?>');
-if(langIdx===-1)langIdx=0;
-function setLang(l){document.querySelectorAll('[data-lang]').forEach(function(el){el.style.display=el.dataset.lang===l?'':'none'});document.getElementById('mLang').textContent=l.toUpperCase()}
-document.getElementById('mLang').addEventListener('click',function(){langIdx=(langIdx+1)%langs.length;setLang(langs[langIdx])});
-<?php endif; ?>
+  /* Contact form: admin-ajax action hdgavi_maint_contact (honeypot + server-side rate limit) */
+  var form = document.getElementById('mForm');
+  if (!form) return;
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var fb = document.getElementById('mFb'),
+        btn = form.querySelector('button[type="submit"]'),
+        hp = form.querySelector('input[name="website"]'),
+        n = document.getElementById('mf-name').value.trim(),
+        em = document.getElementById('mf-email').value.trim(),
+        m = document.getElementById('mf-msg').value.trim();
+    function say(cls, key) {
+      fb.className = 'm-fb' + (cls ? ' ' + cls : '');
+      fb.textContent = msg(key);
+    }
+    if (!n || !em || !m) { say('err', 'fields'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { say('err', 'email'); return; }
 
-<?php if ( $show_form ) : ?>
-/* Contact form → AJAX wp_mail */
-document.getElementById('mForm').addEventListener('submit',function(e){
-  e.preventDefault();
-  var n=document.getElementById('mf-name').value.trim(),em=document.getElementById('mf-email').value.trim(),m=document.getElementById('mf-msg').value.trim(),fb=document.getElementById('mFb'),btn=this.querySelector('.m-send');
-  var cl=(typeof langs!=='undefined'&&typeof langIdx!=='undefined')?langs[langIdx]:'en';
-  if(!n||!em||!m){fb.className='m-fb err';fb.textContent=cl==='fr'?'Veuillez remplir tous les champs.':(cl==='es'?'Por favor complete todos los campos.':'Please fill all fields.');return}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){fb.className='m-fb err';fb.textContent=cl==='fr'?'Email invalide.':(cl==='es'?'Email inválido.':'Invalid email.');return}
-  btn.disabled=true;btn.textContent=cl==='fr'?'Envoi...':(cl==='es'?'Enviando...':'Sending...');
-  var fd=new FormData();fd.append('action','hdgavi_maint_contact');fd.append('name',n);fd.append('email',em);fd.append('message',m);
-  var ac=new AbortController(),tid=setTimeout(function(){ac.abort()},15000);
-  fetch('<?php echo esc_url( admin_url( "admin-ajax.php" ) ); ?>',{method:'POST',body:fd,signal:ac.signal})
-    .then(function(r){return r.json()})
-    .then(function(d){
-      if(d.success){fb.className='m-fb ok';fb.textContent=cl==='fr'?'Message envoyé !':(cl==='es'?'¡Mensaje enviado!':'Message sent!');e.target.reset()}
-      else{fb.className='m-fb err';fb.textContent=cl==='fr'?'Erreur. Réessayez.':(cl==='es'?'Error. Inténtelo de nuevo.':'Error. Try again.')}
-    })
-    .catch(function(err){fb.className='m-fb err';fb.textContent=err.name==='AbortError'?(cl==='fr'?'Délai dépassé.':'Timeout.'):('Error.')})
-    .finally(function(){clearTimeout(tid);btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> '+(cl==='fr'?'Envoyer':(cl==='es'?'Enviar':'Send'))});
-});
-<?php endif; ?>
-
+    btn.disabled = true;
+    say('', 'sending');
+    var fd = new FormData();
+    fd.append('action', 'hdgavi_maint_contact');
+    fd.append('name', n);
+    fd.append('email', em);
+    fd.append('message', m);
+    fd.append('website', hp ? hp.value : '');
+    var ac = window.AbortController ? new AbortController() : null,
+        tid = setTimeout(function () { if (ac) ac.abort(); }, 15000);
+    fetch(C.ajax, { method: 'POST', body: fd, signal: ac ? ac.signal : undefined })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.success) { say('ok', 'ok'); form.reset(); }
+        else { say('err', 'error'); }
+      })
+      .catch(function (err) { say('err', err && err.name === 'AbortError' ? 'timeout' : 'error'); })
+      .then(function () { clearTimeout(tid); btn.disabled = false; });
+  });
 })();
 </script>
 </body>

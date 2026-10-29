@@ -5,19 +5,16 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 get_header();
-?>
 
-<section class="page-section">
-    <div class="container">
-        <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
-        <div class="section-header fade-up">
-            <h1 class="section-title"><?php the_title(); ?></h1>
-        </div>
-        <div class="about-text fade-up">
+if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+<article class="sec wrap sec--first" aria-labelledby="t-page">
+    <h1 class="sec-title" id="t-page"><?php the_title(); ?></h1>
+    <div class="sec-body">
+        <div class="prose entry-content">
             <?php the_content(); ?>
         </div>
-        <?php endwhile; endif; ?>
     </div>
-</section>
+</article>
+<?php endwhile; endif;
 
-<?php get_footer(); ?>
+get_footer();

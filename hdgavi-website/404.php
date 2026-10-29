@@ -6,21 +6,16 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 get_header();
 ?>
-
-<section class="page-section" style="min-height:60vh;display:flex;align-items:center">
-    <div class="container" style="text-align:center">
-        <h1 class="section-title" style="font-size:4rem;margin-bottom:16px;color:var(--accent)">404</h1>
-        <p class="section-desc" style="max-width:400px;margin:0 auto 32px">
-            <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_404_text_en', 'Page not found. The page you\'re looking for doesn\'t exist.' ) ); ?></span>
-            <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_404_text_fr', 'Page introuvable. La page que vous cherchez n\'existe pas.' ) ); ?></span>
-            <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_404_text_es', 'Página no encontrada. La página que busca no existe.' ) ); ?></span>
-        </p>
-        <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="btn-primary">
-            <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_404_btn_en', 'Back to Home' ) ); ?></span>
-            <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_404_btn_fr', 'Retour à l\'accueil' ) ); ?></span>
-            <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_404_btn_es', 'Volver al inicio' ) ); ?></span>
-        </a>
+<section class="sec wrap sec--first" aria-labelledby="t-404">
+    <h1 class="sec-title" id="t-404"><?php echo hdgavi_tri( 'Page not found', 'Page introuvable', 'Página no encontrada' ); ?></h1>
+    <div class="sec-body">
+        <div class="entry">
+            <p class="when">404</p>
+            <div class="what">
+                <p><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_404_text', 'This page does not exist or has been moved.', 'Cette page n’existe pas ou a été déplacée.', 'Esta página no existe o ha sido movida.' ) ); ?></p>
+                <p class="desc"><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_404_btn', 'Back to the home page', 'Retour à l’accueil', 'Volver al inicio' ) ); ?></a></p>
+            </div>
+        </div>
     </div>
 </section>
-
 <?php get_footer(); ?>

@@ -1,11 +1,14 @@
-/* Editor styles for HD GAVI Portfolio */
+/* Editor styles for HD GAVI Portfolio (mirrors the front-end typography) */
 body {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    line-height: 1.65;
-    color: #0F172A;
+    font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #1C1C1A;
+    background: #F8F7F3;
 }
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
-    line-height: 1.15;
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 500;
+    line-height: 1.25;
 }
+a { color: #2A5878; }

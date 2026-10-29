@@ -1,6 +1,11 @@
 <?php
 /**
- * HD GAVI Portfolio — Customizer: General, Splash, Footer, Branding
+ * HD GAVI Portfolio — Customizer: panel, General, Logo, Footer
+ *
+ * 7.0.0: the splash-page section (title, buttons, animation), the footer description and the
+ * RQTH texts were removed, nothing reads them any more. The CV texts are edited in the
+ * "Contenu du CV" section (inc/customizer-about.php).
+ *
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -16,22 +21,30 @@ function hdgavi_customizer_general( $wp_customize ) {
        SECTION: General
        ═══════════════════════════════════════ */
     $wp_customize->add_section( 'hdgavi_general', array(
-        'title'    => __( '1. Général', 'hdgavi-portfolio' ),
+        'title'    => __( 'Général', 'hdgavi-portfolio' ),
         'panel'    => $panel,
         'priority' => 10,
     ) );
 
+    // id => array( label, default, sanitize callback, description )
     $general_fields = array(
-        'general_name'     => array( __( 'Nom complet', 'hdgavi-portfolio' ), 'Holali David GAVI', 'sanitize_text_field' ),
-        'general_email'    => array( __( 'Email', 'hdgavi-portfolio' ), 'g.holalidavid@gmail.com', 'sanitize_email' ),
-        'general_location' => array( __( 'Localisation', 'hdgavi-portfolio' ), 'Saint-Denis (93), Île-de-France', 'sanitize_text_field' ),
-        'contact_github'   => array( __( 'GitHub URL', 'hdgavi-portfolio' ), 'https://github.com/g-holali-david', 'esc_url_raw' ),
-        'contact_github_handle' => array( __( 'GitHub Username', 'hdgavi-portfolio' ), 'g-holali-david', 'sanitize_text_field' ),
-        'contact_linkedin' => array( __( 'LinkedIn URL', 'hdgavi-portfolio' ), '', 'esc_url_raw' ),
+        'general_name'          => array( __( 'Nom complet', 'hdgavi-portfolio' ), 'Holali David GAVI', 'sanitize_text_field', '' ),
+        'general_email'         => array( __( 'Adresse e-mail', 'hdgavi-portfolio' ), 'g.holalidavid@gmail.com', 'sanitize_email', '' ),
+        'general_location'      => array(
+            __( 'Localisation (page de maintenance)', 'hdgavi-portfolio' ),
+            'Aubervilliers (93300), Île-de-France',
+            'sanitize_text_field',
+            __( 'La localisation affichée sur le site se règle dans « Contenu du CV ».', 'hdgavi-portfolio' ),
+        ),
+        'contact_github'        => array( __( 'URL GitHub', 'hdgavi-portfolio' ), 'https://github.com/g-holali-david', 'esc_url_raw', '' ),
+        'contact_github_handle' => array( __( 'Identifiant GitHub', 'hdgavi-portfolio' ), 'g-holali-david', 'sanitize_text_field', '' ),
+        'contact_linkedin'      => array( __( 'URL LinkedIn', 'hdgavi-portfolio' ), 'https://www.linkedin.com/in/holali-david-g-4a434631a/', 'esc_url_raw', '' ),
     );
     foreach ( $general_fields as $k => $f ) {
         $wp_customize->add_setting( $k, array( 'default' => $f[1], 'sanitize_callback' => $f[2] ) );
-        $wp_customize->add_control( $k, array( 'label' => $f[0], 'section' => 'hdgavi_general' ) );
+        $control = array( 'label' => $f[0], 'section' => 'hdgavi_general' );
+        if ( '' !== $f[3] ) $control['description'] = $f[3];
+        $wp_customize->add_control( $k, $control );
     }
 
     // Language select
@@ -40,7 +53,7 @@ function hdgavi_customizer_general( $wp_customize ) {
         'label'   => __( 'Langue par défaut', 'hdgavi-portfolio' ),
         'section' => 'hdgavi_general',
         'type'    => 'select',
-        'choices' => array( 'en' => 'English', 'fr' => 'Français' ),
+        'choices' => array( 'en' => 'English', 'fr' => 'Français', 'es' => 'Español' ),
     ) );
 
     // Profile photo
@@ -53,27 +66,24 @@ function hdgavi_customizer_general( $wp_customize ) {
     // CV PDF
     $wp_customize->add_setting( 'cv_pdf_url', array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
     $wp_customize->add_control( new WP_Customize_Upload_Control( $wp_customize, 'cv_pdf_url', array(
-        'label'   => __( 'CV PDF (upload)', 'hdgavi-portfolio' ),
+        'label'   => __( 'CV au format PDF', 'hdgavi-portfolio' ),
         'section' => 'hdgavi_general',
     ) ) );
 
-    // RQTH
+    // RQTH — sensitive personal data, opt-in only
     $wp_customize->add_setting( 'show_rqth', array( 'default' => false, 'sanitize_callback' => 'hdgavi_sanitize_bool' ) );
     $wp_customize->add_control( 'show_rqth', array(
-        'label'   => __( 'Afficher mention RQTH', 'hdgavi-portfolio' ),
-        'section' => 'hdgavi_general',
-        'type'    => 'checkbox',
+        'label'       => __( 'Afficher la mention RQTH', 'hdgavi-portfolio' ),
+        'description' => __( 'Donnée personnelle sensible, désactivée par défaut.', 'hdgavi-portfolio' ),
+        'section'     => 'hdgavi_general',
+        'type'        => 'checkbox',
     ) );
-    $wp_customize->add_setting( 'rqth_text_en', array( 'default' => 'RQTH recognized', 'sanitize_callback' => 'sanitize_text_field' ) );
-    $wp_customize->add_control( 'rqth_text_en', array( 'label' => __( 'RQTH text (EN)', 'hdgavi-portfolio' ), 'section' => 'hdgavi_general' ) );
-    $wp_customize->add_setting( 'rqth_text_fr', array( 'default' => 'RQTH reconnue', 'sanitize_callback' => 'sanitize_text_field' ) );
-    $wp_customize->add_control( 'rqth_text_fr', array( 'label' => __( 'RQTH text (FR)', 'hdgavi-portfolio' ), 'section' => 'hdgavi_general' ) );
 
     /* ═══════════════════════════════════════
-       SECTION: Branding
+       SECTION: Logo
        ═══════════════════════════════════════ */
     $wp_customize->add_section( 'hdgavi_branding', array(
-        'title'    => __( 'Logo & Identité', 'hdgavi-portfolio' ),
+        'title'    => __( 'Logo et identité', 'hdgavi-portfolio' ),
         'panel'    => $panel,
         'priority' => 12,
     ) );
@@ -83,49 +93,19 @@ function hdgavi_customizer_general( $wp_customize ) {
     $wp_customize->add_control( 'logo_text', array( 'label' => __( 'Texte du logo', 'hdgavi-portfolio' ), 'section' => 'hdgavi_branding' ) );
 
     /* ═══════════════════════════════════════
-       SECTION: Splash Page
-       ═══════════════════════════════════════ */
-    $wp_customize->add_section( 'hdgavi_splash', array(
-        'title'    => __( '2. Splash Page', 'hdgavi-portfolio' ),
-        'panel'    => $panel,
-        'priority' => 15,
-    ) );
-    $splash_fields = array(
-        'splash_title'        => array( __( 'Titre (nom)', 'hdgavi-portfolio' ), 'Holali David GAVI', 'sanitize_text_field' ),
-        'splash_subtitle_en'  => array( __( 'Sous-titre (EN)', 'hdgavi-portfolio' ), 'Cloud & DevOps Engineer', 'sanitize_text_field' ),
-        'splash_subtitle_fr'  => array( __( 'Sous-titre (FR)', 'hdgavi-portfolio' ), 'Ingénieur Cloud & DevOps', 'sanitize_text_field' ),
-        'splash_btn_en'       => array( __( 'Bouton texte (EN)', 'hdgavi-portfolio' ), 'Explore', 'sanitize_text_field' ),
-        'splash_btn_fr'       => array( __( 'Bouton texte (FR)', 'hdgavi-portfolio' ), 'Explorer', 'sanitize_text_field' ),
-        'splash_cv_btn_en'    => array( __( 'Bouton CV (EN)', 'hdgavi-portfolio' ), 'Download CV', 'sanitize_text_field' ),
-        'splash_cv_btn_fr'    => array( __( 'Bouton CV (FR)', 'hdgavi-portfolio' ), 'Télécharger CV', 'sanitize_text_field' ),
-    );
-    foreach ( $splash_fields as $k => $f ) {
-        $wp_customize->add_setting( $k, array( 'default' => $f[1], 'sanitize_callback' => $f[2] ) );
-        $wp_customize->add_control( $k, array( 'label' => $f[0], 'section' => 'hdgavi_splash' ) );
-    }
-    $wp_customize->add_setting( 'splash_animation', array( 'default' => true, 'sanitize_callback' => 'hdgavi_sanitize_bool' ) );
-    $wp_customize->add_control( 'splash_animation', array(
-        'label'   => __( 'Activer l\'animation', 'hdgavi-portfolio' ),
-        'section' => 'hdgavi_splash',
-        'type'    => 'checkbox',
-    ) );
-
-    /* ═══════════════════════════════════════
        SECTION: Footer
        ═══════════════════════════════════════ */
     $wp_customize->add_section( 'hdgavi_footer', array(
-        'title'    => __( '10. Footer', 'hdgavi-portfolio' ),
+        'title'    => __( 'Pied de page', 'hdgavi-portfolio' ),
         'panel'    => $panel,
         'priority' => 100,
     ) );
     $footer_fields = array(
-        'footer_desc_en' => array( __( 'Description footer (EN)', 'hdgavi-portfolio' ), 'Cloud & DevOps Engineer — Containerization, Kubernetes, CI/CD automation and cloud security.', 'sanitize_text_field' ),
-        'footer_desc_fr' => array( __( 'Description footer (FR)', 'hdgavi-portfolio' ), 'Ingénieur Cloud & DevOps — Conteneurisation, Kubernetes, automatisation CI/CD et sécurité cloud.', 'sanitize_text_field' ),
-        'footer_year'    => array( __( 'Année copyright', 'hdgavi-portfolio' ), '2026', 'sanitize_text_field' ),
-        'footer_name'    => array( __( 'Nom copyright', 'hdgavi-portfolio' ), 'Holali David GAVI', 'sanitize_text_field' ),
+        'footer_name' => array( __( 'Nom affiché dans le pied de page', 'hdgavi-portfolio' ), 'Holali David GAVI' ),
+        'footer_year' => array( __( 'Année du copyright (e-mails, page de maintenance)', 'hdgavi-portfolio' ), '2026' ),
     );
     foreach ( $footer_fields as $k => $f ) {
-        $wp_customize->add_setting( $k, array( 'default' => $f[1], 'sanitize_callback' => $f[2] ) );
+        $wp_customize->add_setting( $k, array( 'default' => $f[1], 'sanitize_callback' => 'sanitize_text_field' ) );
         $wp_customize->add_control( $k, array( 'label' => $f[0], 'section' => 'hdgavi_footer' ) );
     }
 }

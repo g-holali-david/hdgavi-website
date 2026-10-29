@@ -1,7 +1,8 @@
 <?php
 /**
  * HD GAVI Portfolio — CV Download Gate
- * Tracks CV downloads with lead capture modal + PDF proxy endpoint
+ * Tracks CV downloads with lead capture modal + PDF proxy endpoint.
+ * The v7 templates link the CV directly; the modal stays for compatibility (theme.js opens it).
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -56,6 +57,7 @@ function hdgavi_ajax_cv_download() {
     $role   = sanitize_text_field( wp_unslash( $_POST['role']   ?? '' ) );
     $reason = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
     $lang   = sanitize_text_field( wp_unslash( $_POST['lang']   ?? 'en' ) );
+    if ( ! in_array( $lang, array( 'en', 'fr', 'es' ), true ) ) $lang = 'en';
 
     // Honeypot check
     if ( ! empty( $_POST['website'] ) ) {
@@ -78,7 +80,7 @@ function hdgavi_ajax_cv_download() {
             'reason'     => $reason,
             'ip_address' => hdgavi_get_client_ip(),
             'user_agent' => sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ),
-            'lang'       => in_array( $lang, array( 'en', 'fr' ), true ) ? $lang : 'en',
+            'lang'       => $lang,
         ),
         array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
     );
@@ -95,103 +97,98 @@ add_action( 'wp_ajax_hdgavi_cv_download', 'hdgavi_ajax_cv_download' );
 add_action( 'wp_ajax_nopriv_hdgavi_cv_download', 'hdgavi_ajax_cv_download' );
 
 /* ═══════════════════════════════════════
-   3. NOTIFICATION EMAIL
+   3. E-MAILS (shared wrapper from inc/email-templates.php)
    ═══════════════════════════════════════ */
 
+/**
+ * Notification to the site owner.
+ */
 function hdgavi_cv_send_notification( $name, $email, $role, $reason ) {
     $to = hdgavi_opt( 'general_email', get_option( 'admin_email' ) );
     if ( ! $to ) return;
 
     $reasons = array(
-        'recruitment' => 'Recruitment / Recrutement',
-        'academic'    => 'Academic / Académique',
+        'recruitment'   => 'Recruitment / Recrutement',
+        'academic'      => 'Academic / Académique',
         'collaboration' => 'Collaboration',
-        'other'       => 'Other / Autre',
+        'other'         => 'Other / Autre',
     );
     $reason_label = $reasons[ $reason ] ?? $reason;
 
-    $subject = 'CV Downloaded by ' . $name;
+    $subject = 'CV request: ' . $name;
+    $header  = hdgavi_email_header( 'CV download', 'A visitor filled in the CV form on the site.' );
 
-    $header = hdgavi_email_header(
-        '📄 CV Download',
-        'Someone just downloaded your CV'
+    $rows = array(
+        'Name'            => esc_html( $name ),
+        'E-mail'          => '<a href="mailto:' . esc_attr( $email ) . '">' . esc_html( $email ) . '</a>',
+        'Role / position' => esc_html( $role ),
+        'Reason'          => esc_html( $reason_label ),
     );
+    $body = '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">';
+    foreach ( $rows as $label => $value ) {
+        $body .= '<tr><td style="padding:8px 0;"><strong>' . esc_html( $label ) . '</strong><br>' . $value . '</td></tr>';
+    }
+    $body .= '</table>'
+        . '<p style="font-size:12px;">IP: ' . esc_html( hdgavi_get_client_ip() ) . ' &middot; ' . esc_html( wp_date( 'Y-m-d H:i' ) ) . '</p>';
 
-    $body = '
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ' . hdgavi_ec('border') . ';">
-          <strong style="color:' . hdgavi_ec('text_heading') . ';">Name</strong><br>
-          <span style="color:' . hdgavi_ec('text_secondary') . ';">' . esc_html( $name ) . '</span>
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ' . hdgavi_ec('border') . ';">
-          <strong style="color:' . hdgavi_ec('text_heading') . ';">Email</strong><br>
-          <a href="mailto:' . esc_attr( $email ) . '" style="color:' . hdgavi_ec('accent') . ';">' . esc_html( $email ) . '</a>
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ' . hdgavi_ec('border') . ';">
-          <strong style="color:' . hdgavi_ec('text_heading') . ';">Role / Position</strong><br>
-          <span style="color:' . hdgavi_ec('text_secondary') . ';">' . esc_html( $role ) . '</span>
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;">
-          <strong style="color:' . hdgavi_ec('text_heading') . ';">Reason</strong><br>
-          <span style="color:' . hdgavi_ec('text_secondary') . ';">' . esc_html( $reason_label ) . '</span>
-        </td>
-      </tr>
-    </table>
-    <p style="font-size:12px;color:' . hdgavi_ec('text_muted') . ';">IP: ' . esc_html( hdgavi_get_client_ip() ) . ' &middot; ' . esc_html( wp_date( 'Y-m-d H:i' ) ) . '</p>';
-
-    $footer = hdgavi_email_footer();
-    $html   = hdgavi_email_wrap( $header, $body, $footer );
-
+    $html   = hdgavi_email_wrap( $header, $body, hdgavi_email_footer() );
     $result = wp_mail( $to, $subject, $html, array( 'Content-Type: text/html; charset=UTF-8' ) );
     hdgavi_log_mail( $to, $subject, $result );
 }
 
 /**
- * Send confirmation email to visitor after CV download
+ * Confirmation to the visitor after a CV download.
  */
 function hdgavi_cv_send_visitor_confirmation( $name, $email, $lang = 'en' ) {
-    $site_name = hdgavi_opt( 'general_name', 'Portfolio' );
+    if ( ! in_array( $lang, array( 'en', 'fr', 'es' ), true ) ) $lang = 'en';
+    $site_name    = hdgavi_opt( 'general_name', 'Holali David GAVI' );
+    $owner_email  = hdgavi_opt( 'general_email', '' );
     $html_headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
     $titles = array(
-        'en' => 'Thanks for downloading my CV!',
-        'fr' => 'Merci d\'avoir téléchargé mon CV !',
-        'es' => '¡Gracias por descargar mi CV!',
+        'en' => 'Your CV request',
+        'fr' => 'Votre demande de CV',
+        'es' => 'Su solicitud de CV',
     );
-    $subtitles = array(
-        'en' => 'Here\'s how to reach me',
-        'fr' => 'Voici comment me contacter',
-        'es' => 'Así puede contactarme',
+    $intros = array(
+        'en' => '<p>Hello %s,</p><p>Thank you for downloading my CV. The site also details my experience, my projects and my skills.</p>',
+        'fr' => '<p>Bonjour %s,</p><p>Merci d’avoir téléchargé mon CV. Le site détaille aussi mon parcours, mes projets et mes compétences.</p>',
+        'es' => '<p>Hola, %s:</p><p>Gracias por descargar mi CV. El sitio también detalla mi experiencia, mis proyectos y mis competencias.</p>',
     );
-    $messages = array(
-        'en' => '<p>Hi <strong>%s</strong>,</p><p>Thank you for your interest in my profile. You can explore my portfolio for more details about my skills and projects.</p><p>Feel free to reach out if you\'d like to discuss any opportunity.</p>',
-        'fr' => '<p>Bonjour <strong>%s</strong>,</p><p>Merci pour l\'intérêt que vous portez à mon profil. Vous pouvez explorer mon portfolio pour plus de détails sur mes compétences et projets.</p><p>N\'hésitez pas à me contacter si vous souhaitez échanger.</p>',
-        'es' => '<p>Hola <strong>%s</strong>,</p><p>Gracias por su interés en mi perfil. Puede explorar mi portfolio para más detalles sobre mis habilidades y proyectos.</p><p>No dude en contactarme si desea conversar.</p>',
+    $reach = array(
+        'en' => '<p>You can reach me at %s or through the contact page.</p>',
+        'fr' => '<p>Vous pouvez me joindre à l’adresse %s ou depuis la page de contact.</p>',
+        'es' => '<p>Puede contactarme en %s o desde la página de contacto.</p>',
+    );
+    $reach_no_mail = array(
+        'en' => '<p>You can reach me through the contact page.</p>',
+        'fr' => '<p>Vous pouvez me joindre depuis la page de contact.</p>',
+        'es' => '<p>Puede contactarme desde la página de contacto.</p>',
+    );
+    $link_labels = array(
+        'en' => 'Contact page',
+        'fr' => 'Page de contact',
+        'es' => 'Página de contacto',
     );
 
-    $title   = $titles[ $lang ] ?? $titles['en'];
-    $sub     = $subtitles[ $lang ] ?? $subtitles['en'];
-    $msg     = sprintf( $messages[ $lang ] ?? $messages['en'], esc_html( $name ) );
+    $title = $titles[ $lang ];
+    $msg   = sprintf( $intros[ $lang ], esc_html( $name ) );
+    if ( is_email( $owner_email ) ) {
+        $msg .= sprintf( $reach[ $lang ], '<a href="mailto:' . esc_attr( $owner_email ) . '">' . esc_html( $owner_email ) . '</a>' );
+    } else {
+        $msg .= $reach_no_mail[ $lang ];
+    }
 
-    $contact_url = esc_url( home_url( '/contact/' ) );
-    $cta = '<p style="text-align:center;margin-top:24px"><a href="' . $contact_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:' . hdgavi_ec('header_bg') . ';border-radius:50px;text-decoration:none;font-weight:700;font-size:14px">' . ( $lang === 'fr' ? 'Me contacter' : ( $lang === 'es' ? 'Contactarme' : 'Contact me' ) ) . '</a></p>';
+    $contact_url = function_exists( 'hdgavi_page_url' ) ? hdgavi_page_url( 'contact' ) : home_url( '/contact/' );
+    $msg        .= '<p><a href="' . esc_url( $contact_url ) . '">' . esc_html( $link_labels[ $lang ] ) . '</a></p>'
+        . '<p>' . esc_html( $site_name ) . '</p>';
 
-    $cv_header = hdgavi_email_header( $title, $sub );
-    $cv_body = '<div style="padding:24px 32px;color:' . hdgavi_ec('text_body') . ';font-size:14px;line-height:1.7">'
-        . $msg . $cta
-        . '<p style="color:' . hdgavi_ec('text_muted') . ';margin-top:20px">— ' . esc_html( $site_name ) . '</p>'
-        . '</div>';
-    $body = hdgavi_email_wrap( $cv_header, $cv_body, hdgavi_email_footer() );
+    $cv_header = hdgavi_email_header( $title, $site_name );
+    $cv_body   = '<div style="padding:24px 32px;font-size:14px;line-height:1.7">' . $msg . '</div>';
+    $body      = hdgavi_email_wrap( $cv_header, $cv_body, hdgavi_email_footer() );
 
     $subject = $title . ' — ' . $site_name;
-    $result = wp_mail( $email, $subject, $body, $html_headers );
+    $result  = wp_mail( $email, $subject, $body, $html_headers );
     hdgavi_log_mail( $email, $subject, $result );
 }
 
@@ -267,26 +264,26 @@ add_action( 'template_redirect', 'hdgavi_cv_proxy', 1 );
 
 /* ═══════════════════════════════════════
    5. MODAL HTML (injected in wp_footer)
+   Ids, field names and data-* attributes are used by assets/js/theme.js.
    ═══════════════════════════════════════ */
 
 function hdgavi_cv_modal_html() {
     $cv_url = hdgavi_opt( 'cv_pdf_url', '' );
     if ( ! $cv_url ) return;
+    $lang  = hdgavi_opt( 'default_lang', 'en' );
+    $close = array( 'en' => 'Close', 'fr' => 'Fermer', 'es' => 'Cerrar' );
     ?>
     <div class="cv-modal-overlay" id="cvModalOverlay">
         <div class="cv-modal" role="dialog" aria-modal="true" aria-labelledby="cvModalTitle">
-            <button class="cv-modal-close" id="cvModalClose" type="button" aria-label="Close">&times;</button>
+            <button class="cv-modal-close" id="cvModalClose" type="button" aria-label="<?php echo esc_attr( $close[ $lang ] ?? $close['en'] ); ?>">&times;</button>
 
             <div class="cv-modal-header">
-                <div class="cv-modal-icon"><?php echo hdgavi_icon( 'download', 24 ); ?></div>
-                <h3 id="cvModalTitle">
-                    <span data-lang="en">Download CV</span>
-                    <span data-lang="fr">Télécharger le CV</span>
-                </h3>
-                <p class="cv-modal-desc">
-                    <span data-lang="en">Please provide your details to download.</span>
-                    <span data-lang="fr">Merci de renseigner vos informations.</span>
-                </p>
+                <h3 id="cvModalTitle"><?php echo hdgavi_tri( 'Download the CV', 'Télécharger le CV', 'Descargar el CV' ); ?></h3>
+                <p class="cv-modal-desc"><?php echo hdgavi_tri(
+                    'Please fill in these four fields; the download starts right after.',
+                    'Merci de remplir ces quatre champs ; le téléchargement commence ensuite.',
+                    'Rellene estos cuatro campos; la descarga empieza a continuación.'
+                ); ?></p>
             </div>
 
             <form id="cvModalForm" autocomplete="off">
@@ -294,56 +291,44 @@ function hdgavi_cv_modal_html() {
                 <input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off">
 
                 <div class="cv-modal-field">
-                    <label for="cvName">
-                        <span data-lang="en">Full Name</span>
-                        <span data-lang="fr">Nom complet</span>
-                    </label>
+                    <label for="cvName"><?php echo hdgavi_tri( 'Full name', 'Nom complet', 'Nombre completo' ); ?></label>
                     <input type="text" id="cvName" name="name" required
                         data-placeholder-en="John Doe"
-                        data-placeholder-fr="Jean Dupont">
+                        data-placeholder-fr="Jean Dupont"
+                        data-placeholder-es="Juan Pérez">
                 </div>
 
                 <div class="cv-modal-field">
-                    <label for="cvEmail">
-                        <span data-lang="en">Email</span>
-                        <span data-lang="fr">Email</span>
-                    </label>
+                    <label for="cvEmail"><?php echo hdgavi_tri( 'E-mail', 'E-mail', 'Correo electrónico' ); ?></label>
                     <input type="email" id="cvEmail" name="email" required
                         data-placeholder-en="john@company.com"
-                        data-placeholder-fr="jean@entreprise.fr">
+                        data-placeholder-fr="jean@entreprise.fr"
+                        data-placeholder-es="juan@empresa.es">
                 </div>
 
                 <div class="cv-modal-field">
-                    <label for="cvRole">
-                        <span data-lang="en">Your Role / Position</span>
-                        <span data-lang="fr">Votre poste / fonction</span>
-                    </label>
+                    <label for="cvRole"><?php echo hdgavi_tri( 'Your role or position', 'Votre poste ou fonction', 'Su puesto o función' ); ?></label>
                     <input type="text" id="cvRole" name="role" required
-                        data-placeholder-en="HR Manager, CTO, Student..."
-                        data-placeholder-fr="RH, CTO, Étudiant...">
+                        data-placeholder-en="HR manager, CTO, student"
+                        data-placeholder-fr="RH, CTO, étudiant"
+                        data-placeholder-es="RR. HH., CTO, estudiante">
                 </div>
 
                 <div class="cv-modal-field">
-                    <label for="cvReason">
-                        <span data-lang="en">Reason for downloading</span>
-                        <span data-lang="fr">Raison du téléchargement</span>
-                    </label>
+                    <label for="cvReason"><?php echo hdgavi_tri( 'Reason for the download', 'Raison du téléchargement', 'Motivo de la descarga' ); ?></label>
                     <select id="cvReason" name="reason" required>
-                        <option value="">
-                            --
-                        </option>
-                        <option value="recruitment" data-lang-text-en="Recruitment" data-lang-text-fr="Recrutement">Recruitment</option>
-                        <option value="academic" data-lang-text-en="Academic" data-lang-text-fr="Académique">Academic</option>
-                        <option value="collaboration" data-lang-text-en="Collaboration" data-lang-text-fr="Collaboration">Collaboration</option>
-                        <option value="other" data-lang-text-en="Other" data-lang-text-fr="Autre">Other</option>
+                        <option value="">--</option>
+                        <option value="recruitment" data-lang-text-en="Recruitment" data-lang-text-fr="Recrutement" data-lang-text-es="Contratación">Recruitment</option>
+                        <option value="academic" data-lang-text-en="Academic" data-lang-text-fr="Académique" data-lang-text-es="Académico">Academic</option>
+                        <option value="collaboration" data-lang-text-en="Collaboration" data-lang-text-fr="Collaboration" data-lang-text-es="Colaboración">Collaboration</option>
+                        <option value="other" data-lang-text-en="Other" data-lang-text-fr="Autre" data-lang-text-es="Otro">Other</option>
                     </select>
                 </div>
 
                 <div class="cv-modal-actions">
                     <button type="submit" class="btn-primary cv-modal-submit" id="cvModalSubmit">
                         <?php echo hdgavi_icon( 'download', 16 ); ?>
-                        <span data-lang="en">Download</span>
-                        <span data-lang="fr">Télécharger</span>
+                        <?php echo hdgavi_tri( 'Download', 'Télécharger', 'Descargar' ); ?>
                     </button>
                 </div>
 
@@ -352,11 +337,11 @@ function hdgavi_cv_modal_html() {
 
             <!-- Success state -->
             <div class="cv-modal-success" id="cvModalSuccess" style="display:none">
-                <div class="cv-modal-check"><?php echo hdgavi_icon( 'check', 32 ); ?></div>
-                <p>
-                    <span data-lang="en">Thank you! Your download will start shortly.</span>
-                    <span data-lang="fr">Merci ! Le téléchargement va commencer.</span>
-                </p>
+                <p><?php echo hdgavi_tri(
+                    'Thank you. The download will start in a moment.',
+                    'Merci. Le téléchargement va commencer.',
+                    'Gracias. La descarga empezará en un momento.'
+                ); ?></p>
             </div>
         </div>
     </div>

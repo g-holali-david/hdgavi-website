@@ -1,133 +1,51 @@
 === HD GAVI Portfolio ===
 Contributors: Holali David GAVI
-Tags: portfolio, multi-page, dark-mode, bilingual, devops, cloud
+Tags: portfolio, multi-page, bilingual, translation-ready, one-column
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 6.2.1
+Stable tag: 7.0.0
 License: GPL-2.0-or-later
 
-Portfolio WordPress theme — Multi-page, bilingual EN/FR, dark mode default, full Customizer control.
+Portfolio of Holali David GAVI, DevOps / Cloud Native engineer. Laid out like the printed CV, in French, English and Spanish, with light and dark modes.
 
 == Description ==
 
-HD GAVI Portfolio is a fully configurable WordPress portfolio theme designed for developers, engineers, and tech professionals. Every visible text is configurable through the WordPress Customizer — no code editing required.
+The home page reads like the CV: summary, experience, projects, skills, education and contact. Each section also has its own page.
 
-Key features:
-* 20 page templates with dedicated designs
-* Bilingual EN/FR with one-click language toggle
-* Dark mode by default with light mode toggle
-* Interactive terminal animation on splash page
-* AI chatbot widget (Anthropic API)
-* Contact form with email templates (4 templates)
-* Newsletter subscription system
-* GitHub repositories integration
-* PWA-ready (Service Worker + manifest)
-* Privacy-friendly analytics (no cookies)
-* WCAG 2.1 accessibility features
-* SEO optimized (JSON-LD, hreflang, per-page meta)
+* Content of the CV in one place: inc/cv-content.php (texts, experiences, education, skills, projects, timeline). The texts can be overridden in Appearance → Customize → "Contenu du CV".
+* Experiences, education, skills and projects are custom post types, editable in the admin.
+* Typography: IBM Plex Serif, Sans and Mono, self-hosted in assets/fonts/ (SIL Open Font License). No request to Google Fonts.
+* Colours taken from the CV: paper, ink, steel blue #2A5878, blue-grey #DFE6EB. Dark mode in warm graphite.
+* EN / FR / ES switch and light / dark switch, applied before the first paint (no flash).
+* Contact form, CV download (direct link to the PDF set in the Customizer), JSON-LD, sitemap, hreflang.
 
-== Page Templates ==
+== Page templates ==
 
-Core (7):
-1. Splash Page — Animated homepage with terminal
-2. About — Personal presentation with personality traits
-3. Skills — Technical skills grid (7 categories)
-4. Experience — Professional timeline (5 entries, detailed bullets)
-5. Projects — Project cards (8 entries) + GitHub repos
-6. Education — Academic timeline + self-learning courses
-7. Contact — Contact form with email templates
-
-Extended (6):
-8. Certifications — Badge display with filters (12 slots)
-9. Timeline — Full career chronology
-10. Tech Stack — Detailed stack with proficiency levels
-11. Tech Watch — Curated articles from WordPress posts
-12. Blog — Technical articles
-13. Testimonials — Colleague feedback cards
-
-Extra (7):
-14. Presentation — Fullscreen slides mode
-15. Terminal — Interactive CLI easter egg
-16. Newsletter — Email subscription
-17. Uses — Hardware/software setup
-18. Roadmap — Goals and objectives tracker
-19. Availability — Status and contract preferences
-20. Legal — Privacy policy and legal notice
+Main: Home (CV), About, Experience, Projects, Skills, Education, Contact, Availability.
+Secondary (not in the menu): Timeline, Tech Stack, Certifications, Tech Watch, Blog, Testimonials, Presentation, Terminal, Newsletter, Uses, Roadmap, Services, Booking, Resources, Analytics, Legal.
 
 == Installation ==
 
-1. Upload the theme ZIP via Appearance → Themes → Add New → Upload
-2. Activate the theme
-3. Go to Appearance → Portfolio Setup
-4. Click "Import demo content" to pre-fill the Customizer
-5. Click "Create selected pages" to generate all portfolio pages
-6. Customize content via Appearance → Customize
+1. Upload the theme ZIP via Appearance → Themes → Add New → Upload, then activate it.
+2. Appearance → Portfolio Setup: create the pages (the Home page is set as the front page).
+3. In the admin, click "Synchroniser avec le CV" in the yellow notice: experiences, education, skills, projects and timeline are replaced by the content of the CV. Old demo entries that are not on the CV go to the trash; content you created yourself is never touched.
+4. Appearance → Customize: profile photo, CV (PDF), e-mail, phone, LinkedIn, GitHub.
 
-== Setup Guide ==
+== Development ==
 
-After activation:
-1. The theme will prompt you to visit Portfolio Setup
-2. Select which pages to create (all are recommended)
-3. Import demo content for a quick start
-4. Edit content in the Customizer (Appearance → Customize)
-5. Upload your profile photo and CV PDF
-6. Configure the contact form (Web3Forms key or WP Mail SMTP)
-
-Required settings:
-* Permalinks must be set to /%postname%/ (auto-configured)
-* A static front page will be set automatically (splash page)
-
-== Frequently Asked Questions ==
-
-= How do I change the language? =
-Go to Customizer → 1. General → Default Language. Visitors can also toggle via the navbar button.
-
-= How do I configure the contact form? =
-The theme uses its own email system via wp_mail(). For reliable delivery, install WP Mail SMTP and configure an SMTP provider.
-
-= How do I enable the AI chatbot? =
-Go to Customizer → Effects & Toggles → enable Chatbot, then enter your Anthropic API key.
-
-= Can I add more experiences/projects? =
-The theme supports 5 experience entries and 8 project entries via the Customizer.
+style.css is the stylesheet loaded by WordPress (style.min.css is its minified copy); assets/js/theme.js is minified to theme.min.js.
+Regenerate the minified files after any change:
+  npx clean-css-cli style.css -o style.min.css
+  npx terser assets/js/theme.js -o assets/js/theme.min.js --compress --mangle
 
 == Changelog ==
 
-= 6.2.0 =
-* Version harmonization across all files
-* Fixed cache-busting for theme assets
-* Fixed page-wrapper CSS for pages without navbar
-* Added rate limiting on all AJAX endpoints
-* Upgraded IP hashing to HMAC-SHA256 (GDPR)
-* Added Content-Security-Policy header
-* GDPR-compliant newsletter unsubscribe (token-only URL)
-* Added skip-to-content link (WCAG 2.4.1)
-* Added aria-live on dynamic feedback areas
-* Chatbot bubble keyboard accessible
-* aria-hidden on inactive language spans
-* Added hreflang tags (en, fr, x-default)
-* Bilingual server-side meta description for crawlers
-* JSON-LD WebSite schema on front page
-* Sitemap with lastmod dates
-* Google Fonts preconnect
-* Dynamic service worker URL
-* Stats batch writes (performance)
-* Async follow-up emails via WP-Cron
-* Demo content importer (Portfolio Setup page)
-* CHANGELOG.md added
-* Grain overlay hidden by default
+= 7.0.0 =
+* New design based on the printed CV; decorative effects removed (cards with coloured borders, navy and cyan palette, gradients, glows, emoji icons, particles, custom cursor, grain, typing terminal, counters, trait cards, pulsing "Hire me" button).
+* Content aligned with the October 2026 CV, with a one-click synchronisation for existing sites.
+* Self-hosted IBM Plex fonts, light mode by default (follows the system setting), dark mode in warm graphite.
+* See CHANGELOG.md for details.
 
-= 6.1.1 =
-* Bug fixes and template refinements
-
-= 6.1.0 =
-* Lots 2-7: Added 13 new page templates
-* Chatbot, vCard, QR code, newsletter features
-* Extended Customizer with 31 sections
-
-= 6.0.0 =
-* Complete rewrite: multi-page architecture
-* Bilingual EN/FR system
-* Dark mode default
-* Full Customizer control
+= 6.2.1 =
+* Minification, lazy loading, service worker caches.

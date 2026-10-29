@@ -1,36 +1,31 @@
 <?php
 /**
- * Archive template
+ * Archive template: plain dated list of posts.
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 get_header();
 ?>
-
-<section class="page-section">
-    <div class="container">
-        <div class="section-header fade-up">
-            <h1 class="section-title"><?php the_archive_title(); ?></h1>
-            <?php the_archive_description( '<p class="section-desc">', '</p>' ); ?>
+<section class="sec wrap sec--first" aria-labelledby="t-archive">
+    <h1 class="sec-title" id="t-archive"><?php echo wp_kses_post( get_the_archive_title() ); ?></h1>
+    <div class="sec-body">
+        <?php the_archive_description( '<div class="sec-lead">', '</div>' ); ?>
+        <?php if ( have_posts() ) : ?>
+        <div class="entry-list">
+            <?php while ( have_posts() ) : the_post(); ?>
+            <article class="entry">
+                <p class="when"><?php echo esc_html( get_the_date( 'Y-m-d' ) ); ?></p>
+                <div class="what">
+                    <h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+                    <p class="desc"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 32 ) ); ?></p>
+                </div>
+            </article>
+            <?php endwhile; ?>
         </div>
-        <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
-        <article class="project-card fade-up" style="margin-bottom:16px">
-            <h3 class="project-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-            <p class="project-desc"><?php the_excerpt(); ?></p>
-            <span class="edu-period"><?php echo get_the_date(); ?></span>
-        </article>
-        <?php endwhile; ?>
-        <div style="margin-top:32px">
-            <?php the_posts_pagination( array( 'mid_size' => 2 ) ); ?>
-        </div>
+        <div class="sec-main"><?php the_posts_pagination( array( 'mid_size' => 2 ) ); ?></div>
         <?php else : ?>
-        <p class="section-desc">
-            <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_archive_empty_en', 'No posts found.' ) ); ?></span>
-            <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_archive_empty_fr', 'Aucun article trouvé.' ) ); ?></span>
-            <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_archive_empty_es', 'No se encontraron artículos.' ) ); ?></span>
-        </p>
+        <p class="sec-lead empty-note"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_archive_empty', 'No posts found.', 'Aucun article trouvé.', 'No se encontraron artículos.' ) ); ?></p>
         <?php endif; ?>
     </div>
 </section>
-
 <?php get_footer(); ?>

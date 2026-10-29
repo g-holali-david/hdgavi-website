@@ -1,6 +1,8 @@
 <?php
 /**
  * Template Name: Resources / Boîte à outils
+ * Downloadable resources (CPT hdgavi_resource) with a category / price filter (theme.js).
+ * Not linked from the menu.
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -14,160 +16,81 @@ $categories = get_terms( array(
 ) );
 if ( is_wp_error( $categories ) ) $categories = array();
 
-// Get all resources
+// Get all resources and their category slugs (one lookup per resource)
 $resources = hdgavi_get_cpt_posts( 'hdgavi_resource' );
 if ( $resources ) update_postmeta_cache( wp_list_pluck( $resources, 'ID' ) );
+$res_terms = array();
+foreach ( $resources as $r ) {
+    $terms = wp_get_post_terms( $r->ID, 'hdgavi_resource_cat', array( 'fields' => 'slugs' ) );
+    $res_terms[ $r->ID ] = is_array( $terms ) ? $terms : array();
+}
 ?>
+<section class="sec wrap sec--first" aria-labelledby="t-resources">
+    <h1 class="sec-title" id="t-resources"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_res_title', 'Resources', 'Ressources', 'Recursos' ) ); ?></h1>
+    <div class="sec-body">
+        <?php if ( hdgavi_opt( 'show_page_descriptions', true ) ) : ?>
+        <p class="sec-lead"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_res_desc', 'Templates, cheat sheets and scripts to download.', 'Modèles, aide-mémoire et scripts à télécharger.', 'Plantillas, chuletas y scripts para descargar.' ) ); ?></p>
+        <?php endif; ?>
 
-<section class="page-section">
-    <div class="container">
-        <div class="section-header fade-up">
-            <div class="section-label">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_res_section_en', 'Resources' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_res_section_fr', 'Ressources' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_res_section_es', 'Recursos' ) ); ?></span>
-            </div>
-            <h1 class="section-title">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_res_title_en', 'Toolbox & Resources' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_res_title_fr', 'Boîte à outils & Ressources' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_res_title_es', 'Herramientas y Recursos' ) ); ?></span>
-            </h1>
-            <?php if ( hdgavi_opt( 'show_page_descriptions', true ) ) : ?>
-            <p class="section-desc">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_res_desc_en', 'Terraform modules, Docker templates, cheat sheets and scripts to accelerate your projects.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_res_desc_fr', 'Modules Terraform, templates Docker, cheat sheets et scripts pour accélérer vos projets.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_res_desc_es', 'Módulos Terraform, plantillas Docker, cheat sheets y scripts para acelerar tus proyectos.' ) ); ?></span>
-            </p>
-            <?php endif; ?>
-        </div>
-
+        <?php if ( empty( $resources ) ) : ?>
+        <p class="sec-lead empty-note"><?php echo hdgavi_tri( 'No resource yet.', 'Aucune ressource pour le moment.', 'Ningún recurso por el momento.' ); ?></p>
+        <?php else : ?>
         <div class="res-layout">
-            <!-- Sidebar -->
-            <aside class="res-sidebar fade-up">
-                <nav class="res-nav">
-                    <button class="res-nav-item active" data-res-filter="all">
-                        <span data-lang="en">All</span>
-                        <span data-lang="fr">Tout</span>
-                        <span data-lang="es">Todo</span>
-                        <span class="res-nav-count"><?php echo count( $resources ); ?></span>
-                    </button>
-                    <?php foreach ( $categories as $cat ) :
-                        // Count resources in this category
-                        $cat_count = 0;
-                        foreach ( $resources as $r ) {
-                            $terms = wp_get_post_terms( $r->ID, 'hdgavi_resource_cat', array( 'fields' => 'slugs' ) );
-                            if ( in_array( $cat->slug, $terms, true ) ) $cat_count++;
+            <div class="res-sidebar res-nav" role="group">
+                <button type="button" class="res-nav-item active" data-res-filter="all"><?php echo hdgavi_tri( 'All', 'Tout', 'Todo' ); ?> <span class="res-nav-count"><?php echo esc_html( count( $resources ) ); ?></span></button>
+                <?php foreach ( $categories as $cat ) :
+                    $cat_count = 0;
+                    foreach ( $res_terms as $slugs ) {
+                        if ( in_array( $cat->slug, $slugs, true ) ) $cat_count++;
+                    }
+                ?>
+                <button type="button" class="res-nav-item" data-res-filter="<?php echo esc_attr( $cat->slug ); ?>"><?php echo esc_html( $cat->name ); ?> <span class="res-nav-count"><?php echo esc_html( $cat_count ); ?></span></button>
+                <?php endforeach; ?>
+                <span class="res-nav-divider" aria-hidden="true"></span>
+                <button type="button" class="res-nav-item" data-res-filter="free"><?php echo hdgavi_tri( 'Free', 'Gratuit', 'Gratis' ); ?></button>
+                <button type="button" class="res-nav-item" data-res-filter="paid"><?php echo hdgavi_tri( 'Paid', 'Payant', 'De pago' ); ?></button>
+            </div>
+
+            <div class="res-content entry-list">
+                <?php foreach ( $resources as $res ) :
+                    $id      = $res->ID;
+                    $type    = get_post_meta( $id, '_res_type', true );
+                    $type    = $type ? $type : 'free';
+                    $price   = get_post_meta( $id, '_res_price', true );
+                    $buy_url = get_post_meta( $id, '_res_buy_url', true );
+                    $dl_url  = get_post_meta( $id, '_res_download_url', true );
+                    $gated   = get_post_meta( $id, '_res_gated', true );
+                    $format  = get_post_meta( $id, '_res_file_format', true );
+                ?>
+                <article class="res-card" data-res-cats="<?php echo esc_attr( implode( ' ', $res_terms[ $id ] ) ); ?>" data-res-type="<?php echo esc_attr( $type ); ?>">
+                    <p class="res-meta"><?php
+                        if ( 'paid' === $type && $price ) {
+                            echo esc_html( $price );
+                        } else {
+                            echo hdgavi_tri( 'Free', 'Gratuit', 'Gratis' );
                         }
-                    ?>
-                    <button class="res-nav-item" data-res-filter="<?php echo esc_attr( $cat->slug ); ?>">
-                        <?php echo esc_html( $cat->name ); ?>
-                        <span class="res-nav-count"><?php echo $cat_count; ?></span>
-                    </button>
-                    <?php endforeach; ?>
-
-                    <div class="res-nav-divider"></div>
-
-                    <button class="res-nav-item" data-res-filter="free">
-                        <span data-lang="en">Free</span>
-                        <span data-lang="fr">Gratuit</span>
-                        <span data-lang="es">Gratis</span>
-                    </button>
-                    <button class="res-nav-item" data-res-filter="paid">
-                        <span data-lang="en">Paid</span>
-                        <span data-lang="fr">Payant</span>
-                        <span data-lang="es">De pago</span>
-                    </button>
-                </nav>
-            </aside>
-
-            <!-- Main content -->
-            <div class="res-content">
-                <?php if ( empty( $resources ) ) : ?>
-                <p class="section-desc fade-up">
-                    <span data-lang="en">Resources coming soon.</span>
-                    <span data-lang="fr">Ressources à venir.</span>
-                    <span data-lang="es">Recursos próximamente.</span>
-                </p>
-                <?php endif; ?>
-
-                <div class="res-grid">
-                    <?php foreach ( $resources as $res ) :
-                        $id       = $res->ID;
-                        $type     = get_post_meta( $id, '_res_type', true ) ?: 'free';
-                        $price    = get_post_meta( $id, '_res_price', true );
-                        $buy_url  = get_post_meta( $id, '_res_buy_url', true );
-                        $dl_url   = get_post_meta( $id, '_res_download_url', true );
-                        $gated    = get_post_meta( $id, '_res_gated', true );
-                        $format   = get_post_meta( $id, '_res_file_format', true );
-                        $preview  = get_post_meta( $id, '_res_preview_image', true );
-                        $icon     = get_post_meta( $id, '_res_icon', true );
-                        $terms    = wp_get_post_terms( $id, 'hdgavi_resource_cat', array( 'fields' => 'slugs' ) );
-                        $cat_slugs = is_array( $terms ) ? implode( ' ', $terms ) : '';
-                    ?>
-                    <div class="res-card fade-up" data-res-cats="<?php echo esc_attr( $cat_slugs ); ?>" data-res-type="<?php echo esc_attr( $type ); ?>">
-                        <?php if ( $preview ) : ?>
-                        <div class="res-card-image">
-                            <img src="<?php echo esc_url( $preview ); ?>" alt="<?php echo esc_attr( $res->post_title ); ?>" loading="lazy" decoding="async">
+                        if ( $format ) echo ' · ' . esc_html( $format );
+                    ?></p>
+                    <div class="what">
+                        <h2><?php echo esc_html( get_the_title( $res ) ); ?></h2>
+                        <p class="desc"><?php echo hdgavi_tri_arr( hdgavi_meta_tri( $id, '_res_desc' ) ); ?></p>
+                        <?php if ( ( 'paid' === $type && $buy_url ) || $gated || $dl_url ) : ?>
+                        <div class="res-card-actions">
+                            <?php if ( 'paid' === $type && $buy_url ) : ?>
+                            <a href="<?php echo esc_url( $buy_url ); ?>" class="res-btn" target="_blank" rel="noopener"><?php echo hdgavi_tri( 'Buy', 'Acheter', 'Comprar' ); ?></a>
+                            <?php elseif ( $gated ) : ?>
+                            <button type="button" class="res-btn hdgavi-res-gate-trigger" data-res-id="<?php echo esc_attr( $id ); ?>" data-res-url="<?php echo esc_attr( $dl_url ); ?>"><?php echo hdgavi_tri( 'Download', 'Télécharger', 'Descargar' ); ?></button>
+                            <?php elseif ( $dl_url ) : ?>
+                            <a href="<?php echo esc_url( $dl_url ); ?>" class="res-btn" download><?php echo hdgavi_tri( 'Download', 'Télécharger', 'Descargar' ); ?></a>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
-
-                        <div class="res-card-body">
-                            <div class="res-card-top">
-                                <?php if ( $type === 'paid' && $price ) : ?>
-                                <span class="res-badge res-badge-paid"><?php echo esc_html( $price ); ?></span>
-                                <?php else : ?>
-                                <span class="res-badge res-badge-free">
-                                    <span data-lang="en">Free</span>
-                                    <span data-lang="fr">Gratuit</span>
-                                    <span data-lang="es">Gratis</span>
-                                </span>
-                                <?php endif; ?>
-                                <?php if ( $format ) : ?>
-                                <span class="res-format"><?php echo esc_html( $format ); ?></span>
-                                <?php endif; ?>
-                            </div>
-
-                            <h3 class="res-card-title">
-                                <?php if ( $icon ) : ?><span class="res-card-icon"><?php echo esc_html( $icon ); ?></span><?php endif; ?>
-                                <?php echo esc_html( $res->post_title ); ?>
-                            </h3>
-
-                            <p class="res-card-desc">
-                                <span data-lang="en"><?php echo esc_html( get_post_meta( $id, '_res_desc_en', true ) ); ?></span>
-                                <span data-lang="fr"><?php echo esc_html( get_post_meta( $id, '_res_desc_fr', true ) ); ?></span>
-                                <span data-lang="es"><?php echo esc_html( get_post_meta( $id, '_res_desc_es', true ) ); ?></span>
-                            </p>
-
-                            <div class="res-card-actions">
-                                <?php if ( $type === 'paid' && $buy_url ) : ?>
-                                <a href="<?php echo esc_url( $buy_url ); ?>" class="btn-primary res-btn" target="_blank" rel="noopener">
-                                    <span data-lang="en">Buy</span>
-                                    <span data-lang="fr">Acheter</span>
-                                    <span data-lang="es">Comprar</span>
-                                </a>
-                                <?php elseif ( $gated ) : ?>
-                                <button type="button" class="btn-primary res-btn hdgavi-res-gate-trigger" data-res-id="<?php echo esc_attr( $id ); ?>" data-res-url="<?php echo esc_attr( $dl_url ); ?>">
-                                    <?php echo hdgavi_icon( 'download', 14 ); ?>
-                                    <span data-lang="en">Download</span>
-                                    <span data-lang="fr">Télécharger</span>
-                                    <span data-lang="es">Descargar</span>
-                                </button>
-                                <?php elseif ( $dl_url ) : ?>
-                                <a href="<?php echo esc_url( $dl_url ); ?>" class="btn-primary res-btn" download>
-                                    <?php echo hdgavi_icon( 'download', 14 ); ?>
-                                    <span data-lang="en">Download</span>
-                                    <span data-lang="fr">Télécharger</span>
-                                    <span data-lang="es">Descargar</span>
-                                </a>
-                                <?php endif; ?>
-                            </div>
-                        </div>
                     </div>
-                    <?php endforeach; ?>
-                </div>
+                </article>
+                <?php endforeach; ?>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </section>
-
 <?php get_footer(); ?>

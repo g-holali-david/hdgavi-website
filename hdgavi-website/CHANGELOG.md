@@ -1,5 +1,30 @@
 # Changelog — HD GAVI Portfolio
 
+## [7.0.0] — 2026-10-29
+
+### Design
+- New visual identity taken from the printed CV: warm paper background, near-black ink, steel blue #2A5878, blue-grey #DFE6EB; dark mode in warm graphite with cream text.
+- Typography: IBM Plex Serif (titles), IBM Plex Sans (text), IBM Plex Mono (dates, technologies), self-hosted in `assets/fonts/` — Google Fonts removed (no third-party request, CSP tightened).
+- Résumé layout: section titles in a left column, dates in a meta column, content in a readable main column, hairline rules instead of cards.
+- Removed the decorative layer: rounded cards with coloured side borders, navy + cyan palette, gradients, glows, pills, emoji icons, eyebrow labels with dot-grid icons, particles canvas, custom cursor, grain overlay, parallax, typing terminal on the home page, animated counters, reading progress bar, Konami toast, page fade transitions, pulsing "Hire me" button, placeholder screenshots.
+- Light mode by default (follows the system preference), theme and language applied before first paint (no flash). Explicit choice stored under `hdgavi_theme_v2`.
+- New header (6 links, CV, FR/EN/ES, theme) and a quiet one-line footer. Real PWA icons.
+
+### Content
+- `inc/cv-content.php` is the single source of truth for the CV: texts (FR/EN/ES), experiences, education, skills (the 7 CV categories), the 4 CV projects (descriptions taken from their GitHub READMEs) and the timeline.
+- Removed what is not on the CV: surveyor experience, BTS and psychology entries, stats and trait cards, invented case-study metrics, certifications, salary, "Freelance".
+- Corrected facts: location Aubervilliers (93300), Master 1 (not "Master 1 & 2"), professional title TSSR in 2023, title "Ingénieur DevOps / Cloud Native".
+- Admin notice "Synchroniser avec le CV": overwrites the demo-imported CPT posts, trashes obsolete demo posts (flag `_hdgavi_demo`), never touches posts created by hand.
+- Projects get "key points" (EN/FR/ES) and Spanish title/description fields in the editor.
+
+### Code
+- New template parts (`template-parts/cv-*.php`) shared by the home page and the CV pages; new helpers in `inc/bilingual.php` (`hdgavi_tri()`, `hdgavi_meta_tri()`, `hdgavi_page_url()`...).
+- Header/footer no longer special-case the home page; navigation only links to pages that exist.
+- `theme.js`: gimmick modules removed (1 850 → 1 300 lines); new menu, theme and language handling.
+- `functions.php`: Google Fonts, critical CSS inlining (stale copy of the old design) and the injected design CSS removed.
+- `theme.json` and editor styles use the new palette and fonts.
+- Service worker: cache names bumped, pre-cache paths made relative to the theme folder (the old `/offline.html` path made installation fail).
+
 ## [6.2.1] — 2026-03-26
 
 ### Performance — Minification & Lazy Loading

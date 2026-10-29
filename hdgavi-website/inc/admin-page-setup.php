@@ -52,7 +52,7 @@ function hdgavi_get_portfolio_pages() {
 function hdgavi_admin_menu() {
     add_theme_page(
         __( 'Portfolio Setup', 'hdgavi-portfolio' ),
-        __( '🎨 Portfolio Setup', 'hdgavi-portfolio' ),
+        __( 'Portfolio Setup', 'hdgavi-portfolio' ),
         'edit_pages',
         'hdgavi-setup',
         'hdgavi_setup_page_render'
@@ -173,7 +173,7 @@ function hdgavi_setup_page_render() {
         'maintenance_desc_en'  => array( 'Message (EN)', 'Come back soon!' ),
         'maintenance_desc_fr'  => array( 'Message (FR)', 'Revenez bientôt !' ),
         'maintenance_desc_es'  => array( 'Mensaje (ES)', '¡Vuelve pronto!' ),
-        'maintenance_icon'     => array( 'Icon (emoji)', '🚧' ),
+        'maintenance_icon'     => array( 'Icon (not displayed since v7)', '' ),
         'maintenance_role_en'  => array( 'Role (EN)',  '' ),
         'maintenance_role_fr'  => array( 'Rôle (FR)',  '' ),
         'maintenance_role_es'  => array( 'Rol (ES)',   '' ),

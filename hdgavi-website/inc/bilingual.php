@@ -57,7 +57,7 @@ function hdgavi_nav_labels() {
     static $labels = null;
     if ( $labels !== null ) return $labels;
     $labels = array(
-        'about'          => array( 'en' => hdgavi_opt( 'nav_about_en', 'About' ),          'fr' => hdgavi_opt( 'nav_about_fr', 'Qui je suis' ),   'es' => hdgavi_opt( 'nav_about_es', 'Sobre mí' ) ),
+        'about'          => array( 'en' => hdgavi_opt( 'nav_about_en', 'About' ),          'fr' => hdgavi_opt( 'nav_about_fr', 'À propos' ),   'es' => hdgavi_opt( 'nav_about_es', 'Sobre mí' ) ),
         'skills'         => array( 'en' => hdgavi_opt( 'nav_skills_en', 'Skills' ),         'fr' => hdgavi_opt( 'nav_skills_fr', 'Compétences' ),   'es' => hdgavi_opt( 'nav_skills_es', 'Habilidades' ) ),
         'experience'     => array( 'en' => hdgavi_opt( 'nav_experience_en', 'Experience' ),  'fr' => hdgavi_opt( 'nav_experience_fr', 'Expérience' ), 'es' => hdgavi_opt( 'nav_experience_es', 'Experiencia' ) ),
         'projects'       => array( 'en' => hdgavi_opt( 'nav_projects_en', 'Projects' ),     'fr' => hdgavi_opt( 'nav_projects_fr', 'Projets' ),     'es' => hdgavi_opt( 'nav_projects_es', 'Proyectos' ) ),
@@ -68,6 +68,158 @@ function hdgavi_nav_labels() {
         'certifications' => array( 'en' => hdgavi_opt( 'nav_certs_en', 'Certs' ),           'fr' => hdgavi_opt( 'nav_certs_fr', 'Certifs' ),        'es' => hdgavi_opt( 'nav_certs_es', 'Certif.' ) ),
     );
     return $labels;
+}
+
+/**
+ * EN / FR / ES spans for a literal string (escaped). Missing FR/ES fall back to EN.
+ */
+function hdgavi_tri( $en, $fr = '', $es = '' ) {
+    $default = hdgavi_opt( 'default_lang', 'en' );
+    $texts   = array(
+        'en' => (string) $en,
+        'fr' => ( '' !== (string) $fr ) ? (string) $fr : (string) $en,
+        'es' => ( '' !== (string) $es ) ? (string) $es : (string) $en,
+    );
+    $out = '';
+    foreach ( $texts as $lang => $text ) {
+        $hidden = ( $lang !== $default ) ? ' aria-hidden="true"' : '';
+        $out   .= '<span data-lang="' . $lang . '"' . $hidden . '>' . esc_html( $text ) . '</span>';
+    }
+    return $out;
+}
+
+/**
+ * Same as hdgavi_tri() for an array( 'en' => , 'fr' => , 'es' => ).
+ */
+function hdgavi_tri_arr( $texts ) {
+    return hdgavi_tri( $texts['en'] ?? '', $texts['fr'] ?? '', $texts['es'] ?? '' );
+}
+
+/**
+ * Read a translated post meta (<base>_en / _fr / _es) with sensible fallbacks.
+ */
+function hdgavi_meta_tri( $post_id, $base ) {
+    $en = (string) get_post_meta( $post_id, $base . '_en', true );
+    $fr = (string) get_post_meta( $post_id, $base . '_fr', true );
+    $es = (string) get_post_meta( $post_id, $base . '_es', true );
+    if ( '' === $en ) $en = $fr;
+    return array(
+        'en' => $en,
+        'fr' => ( '' !== $fr ) ? $fr : $en,
+        'es' => ( '' !== $es ) ? $es : $en,
+    );
+}
+
+/**
+ * Read a translated Customizer value (<key>_en / _fr / _es) with defaults.
+ */
+function hdgavi_opt_tri( $key, $en = '', $fr = '', $es = '' ) {
+    // An empty Customizer field means "use the default".
+    $v_en = trim( (string) hdgavi_opt( $key . '_en', $en ) );
+    $v_fr = trim( (string) hdgavi_opt( $key . '_fr', $fr ) );
+    $v_es = trim( (string) hdgavi_opt( $key . '_es', $es ) );
+    if ( '' === $v_en ) $v_en = (string) $en;
+    if ( '' === $v_fr ) $v_fr = (string) $fr;
+    if ( '' === $v_es ) $v_es = (string) $es;
+    return array(
+        'en' => $v_en,
+        'fr' => ( '' !== $v_fr ) ? $v_fr : $v_en,
+        'es' => ( '' !== $v_es ) ? $v_es : $v_en,
+    );
+}
+
+/**
+ * Three language blocks for HTML content (kses-filtered). $tag is the wrapper element.
+ */
+function hdgavi_tri_html( $texts, $tag = 'div', $class = '' ) {
+    $default = hdgavi_opt( 'default_lang', 'en' );
+    $tag     = in_array( $tag, array( 'div', 'ul', 'p' ), true ) ? $tag : 'div';
+    $cls     = $class ? ' class="' . esc_attr( $class ) . '"' : '';
+    $out     = '';
+    foreach ( array( 'en', 'fr', 'es' ) as $lang ) {
+        $html = isset( $texts[ $lang ] ) && '' !== $texts[ $lang ] ? $texts[ $lang ] : ( $texts['en'] ?? '' );
+        if ( 'p' === $tag ) $tag = 'div';
+        $hidden = ( $lang !== $default ) ? ' aria-hidden="true"' : '';
+        $out   .= '<' . $tag . $cls . ' data-lang="' . $lang . '"' . $hidden . '>' . wp_kses_post( $html ) . '</' . $tag . '>';
+    }
+    return $out;
+}
+
+/**
+ * Newline-separated meta (<base>_en / _fr / _es) as one <ul data-lang> per language.
+ */
+function hdgavi_meta_list_tri( $post_id, $base, $class = 'dashes' ) {
+    $texts = hdgavi_meta_tri( $post_id, $base );
+    if ( '' === trim( $texts['en'] . $texts['fr'] . $texts['es'] ) ) return '';
+    $default = hdgavi_opt( 'default_lang', 'en' );
+    $out     = '';
+    foreach ( $texts as $lang => $raw ) {
+        $lines = array_filter( array_map( 'trim', explode( "\n", (string) $raw ) ) );
+        if ( ! $lines ) continue;
+        $hidden = ( $lang !== $default ) ? ' aria-hidden="true"' : '';
+        $out   .= '<ul class="' . esc_attr( $class ) . '" data-lang="' . $lang . '"' . $hidden . '>';
+        foreach ( $lines as $line ) $out .= '<li>' . esc_html( $line ) . '</li>';
+        $out .= '</ul>';
+    }
+    return $out;
+}
+
+/**
+ * Comma-separated list rendered as a plain technology line.
+ */
+function hdgavi_stack_list( $csv, $class = 'stack stack--inline', $label = '' ) {
+    $items = array_filter( array_map( 'trim', explode( ',', (string) $csv ) ) );
+    if ( ! $items ) return '';
+    $aria = $label ? ' aria-label="' . esc_attr( $label ) . '"' : '';
+    $out  = '<ul class="' . esc_attr( $class ) . '"' . $aria . '>';
+    foreach ( $items as $item ) $out .= '<li>' . esc_html( $item ) . '</li>';
+    return $out . '</ul>';
+}
+
+/**
+ * Name with an all-caps surname wrapped for letter-spacing ("Holali David <span class=caps>GAVI</span>").
+ */
+function hdgavi_name_html( $name ) {
+    $parts = explode( ' ', trim( (string) $name ) );
+    $last  = array_pop( $parts );
+    $first = implode( ' ', $parts );
+    $caps  = ( $last === strtoupper( $last ) && strlen( $last ) > 1 );
+    return ( $first ? esc_html( $first ) . ' ' : '' ) . ( $caps ? '<span class="caps">' . esc_html( $last ) . '</span>' : esc_html( $last ) );
+}
+
+/**
+ * Permalink of a published page by slug, or '' when the page does not exist.
+ */
+function hdgavi_page_url( $slug ) {
+    static $cache = array();
+    if ( isset( $cache[ $slug ] ) ) return $cache[ $slug ];
+    $page = get_page_by_path( $slug, OBJECT, 'page' );
+    $cache[ $slug ] = ( $page && 'publish' === $page->post_status ) ? get_permalink( $page ) : '';
+    return $cache[ $slug ];
+}
+
+/**
+ * Main navigation (CV pages) and footer links (secondary pages), existing pages only.
+ */
+function hdgavi_primary_nav() {
+    $labels = hdgavi_nav_labels();
+    $items  = array();
+    foreach ( array( 'about', 'experience', 'projects', 'skills', 'education', 'contact' ) as $slug ) {
+        $url = hdgavi_page_url( $slug );
+        if ( $url && isset( $labels[ $slug ] ) ) {
+            $items[ $slug ] = array( 'url' => $url, 'labels' => $labels[ $slug ] );
+        }
+    }
+    return $items;
+}
+
+function hdgavi_footer_nav() {
+    $items = array();
+    foreach ( array( 'blog', 'watch', 'timeline', 'availability', 'legal' ) as $slug ) {
+        $url = hdgavi_page_url( $slug );
+        if ( $url ) $items[ $slug ] = array( 'url' => $url, 'labels' => hdgavi_cv_label( 'footer_' . $slug ) );
+    }
+    return $items;
 }
 
 /**

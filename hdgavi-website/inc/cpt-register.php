@@ -276,10 +276,17 @@ function hdgavi_proj_meta_render( $post ) {
     hdgavi_section_heading( 'English' );
     hdgavi_render_text( $id, '_proj_title_en', 'Title (EN)' );
     hdgavi_render_textarea( $id, '_proj_desc_en', 'Description (EN)', 2 );
+    hdgavi_render_textarea( $id, '_proj_points_en', 'Key points (EN), one per line', 4 );
 
     hdgavi_section_heading( 'French' );
     hdgavi_render_text( $id, '_proj_title_fr', 'Title (FR)' );
     hdgavi_render_textarea( $id, '_proj_desc_fr', 'Description (FR)', 2 );
+    hdgavi_render_textarea( $id, '_proj_points_fr', 'Key points (FR), one per line', 4 );
+
+    hdgavi_section_heading( 'Spanish' );
+    hdgavi_render_text( $id, '_proj_title_es', 'Title (ES)' );
+    hdgavi_render_textarea( $id, '_proj_desc_es', 'Description (ES)', 2 );
+    hdgavi_render_textarea( $id, '_proj_points_es', 'Key points (ES), one per line', 4 );
 
     hdgavi_section_heading( 'Common' );
     hdgavi_render_text( $id, '_proj_techs', 'Technologies (comma-separated)', 'React, Node.js, PostgreSQL' );
@@ -519,8 +526,8 @@ function hdgavi_cpt_save_meta( $post_id ) {
         '_exp_period_en', '_exp_period_fr', '_exp_period_es',
         '_exp_location', '_exp_techs',
         '_exp_desc_en', '_exp_desc_fr', '_exp_desc_es',
-        '_proj_tag', '_proj_title_en', '_proj_title_fr', '_proj_techs',
-        '_proj_desc_en', '_proj_desc_fr', '_proj_metrics',
+        '_proj_tag', '_proj_title_en', '_proj_title_fr', '_proj_title_es', '_proj_techs',
+        '_proj_desc_en', '_proj_desc_fr', '_proj_desc_es', '_proj_metrics',
         '_edu_period', '_edu_school',
         '_edu_degree_en', '_edu_degree_fr', '_edu_degree_es',
         '_edu_notes_en', '_edu_notes_fr', '_edu_notes_es',
@@ -555,6 +562,7 @@ function hdgavi_cpt_save_meta( $post_id ) {
         '_proj_solution_en', '_proj_solution_fr', '_proj_solution_es',
         '_proj_result_en', '_proj_result_fr', '_proj_result_es',
         '_proj_gallery',
+        '_proj_points_en', '_proj_points_fr', '_proj_points_es',
         '_res_desc_en', '_res_desc_fr', '_res_desc_es',
         // Watch article excerpts
         '_watch_excerpt_en', '_watch_excerpt_fr', '_watch_excerpt_es',

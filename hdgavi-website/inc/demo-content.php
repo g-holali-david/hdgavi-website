@@ -11,283 +11,130 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Returns the full array of demo content for all Customizer options.
  */
 function hdgavi_get_demo_content() {
-	return array(
+	$seo = array(
+		'home'           => array( 'Holali David GAVI — DevOps / Cloud Native Engineer', 'Holali David GAVI — Ingénieur DevOps / Cloud Native', 'Holali David GAVI — Ingeniero DevOps / Cloud Native',
+			'Holali David GAVI, DevOps / Cloud Native engineer on a work-study contract at Dassault Systèmes: Kubernetes, Helm, CI/CD, containerisation and container security.',
+			'Holali David GAVI, ingénieur DevOps / Cloud Native en alternance chez Dassault Systèmes : Kubernetes, Helm, CI/CD, conteneurisation et sécurisation des conteneurs.',
+			'Holali David GAVI, ingeniero DevOps / Cloud Native en alternancia en Dassault Systèmes: Kubernetes, Helm, CI/CD, contenedorización y seguridad de contenedores.' ),
+		'about'          => array( 'About – Holali David GAVI', 'À propos – Holali David GAVI', 'Sobre mí – Holali David GAVI',
+			'Current role at Dassault Systèmes, education and goals of Holali David GAVI, DevOps / Cloud Native engineer.',
+			'Poste actuel chez Dassault Systèmes, formation et objectifs de Holali David GAVI, ingénieur DevOps / Cloud Native.',
+			'Puesto actual en Dassault Systèmes, formación y objetivos de Holali David GAVI, ingeniero DevOps / Cloud Native.' ),
+		'skills'         => array( 'Skills – Holali David GAVI', 'Compétences – Holali David GAVI', 'Competencias – Holali David GAVI',
+			'Docker, Kubernetes, Helm, Istio, Jenkins, GitLab CI, GitHub Actions, ArgoCD, AWS, Terraform, Ansible, Kyverno, Trivy, Prometheus, Grafana, Java, Python, Bash.',
+			'Docker, Kubernetes, Helm, Istio, Jenkins, GitLab CI, GitHub Actions, ArgoCD, AWS, Terraform, Ansible, Kyverno, Trivy, Prometheus, Grafana, Java, Python, Bash.',
+			'Docker, Kubernetes, Helm, Istio, Jenkins, GitLab CI, GitHub Actions, ArgoCD, AWS, Terraform, Ansible, Kyverno, Trivy, Prometheus, Grafana, Java, Python, Bash.' ),
+		'experience'     => array( 'Experience – Holali David GAVI', 'Expérience – Holali David GAVI', 'Experiencia – Holali David GAVI',
+			'DevOps / Cloud Native engineer (work-study) at Dassault Systèmes since November 2024, plus WordPress, Flutter and IT support roles.',
+			'Ingénieur DevOps / Cloud Native en alternance chez Dassault Systèmes depuis novembre 2024, ainsi que des missions WordPress, Flutter et support informatique.',
+			'Ingeniero DevOps / Cloud Native en alternancia en Dassault Systèmes desde noviembre de 2024, además de misiones WordPress, Flutter y soporte informático.' ),
+		'projects'       => array( 'Projects – Holali David GAVI', 'Projets – Holali David GAVI', 'Proyectos – Holali David GAVI',
+			'Technical projects: AWS DevOps platform, DevSecOps pipeline, GitOps microservices architecture and a DevOps CLI in Go.',
+			'Projets techniques : plateforme DevOps AWS, pipeline DevSecOps, architecture microservices GitOps et CLI DevOps en Go.',
+			'Proyectos técnicos: plataforma DevOps en AWS, pipeline DevSecOps, arquitectura de microservicios GitOps y una CLI DevOps en Go.' ),
+		'education'      => array( 'Education – Holali David GAVI', 'Formation – Holali David GAVI', 'Formación – Holali David GAVI',
+			'Mastère in Cybersecurity & Cloud Computing (IPSSI), Master 1 and bachelor’s degrees at CNAM, professional title in systems and networks.',
+			'Mastère Cybersécurité & Cloud Computing (IPSSI), Master 1 et licences au CNAM, titre professionnel Technicien Supérieur Systèmes et Réseaux.',
+			'Mastère en Ciberseguridad y Cloud Computing (IPSSI), Máster 1 y licenciaturas en el CNAM, título profesional en sistemas y redes.' ),
+		'contact'        => array( 'Contact – Holali David GAVI', 'Contact – Holali David GAVI', 'Contacto – Holali David GAVI',
+			'Contact Holali David GAVI: e-mail, phone, LinkedIn and GitHub.',
+			'Contacter Holali David GAVI : e-mail, téléphone, LinkedIn et GitHub.',
+			'Contactar con Holali David GAVI: correo, teléfono, LinkedIn y GitHub.' ),
+		'availability'   => array( 'Availability – Holali David GAVI', 'Disponibilité – Holali David GAVI', 'Disponibilidad – Holali David GAVI',
+			'Work-study at Dassault Systèmes; looking for a permanent contract on Cloud, DevOps, Platform Engineering or SRE projects.',
+			'Alternance chez Dassault Systèmes ; recherche d’un CDI sur des projets Cloud, DevOps, Platform Engineering ou SRE.',
+			'Alternancia en Dassault Systèmes; busca un contrato indefinido en proyectos Cloud, DevOps, Platform Engineering o SRE.' ),
+		'timeline'       => array( 'Timeline – Holali David GAVI', 'Parcours – Holali David GAVI', 'Trayectoria – Holali David GAVI',
+			'Experience and education of Holali David GAVI in chronological order.',
+			'Expériences et formations de Holali David GAVI, par ordre chronologique.',
+			'Experiencia y formación de Holali David GAVI en orden cronológico.' ),
+		'blog'           => array( 'Blog – Holali David GAVI', 'Blog – Holali David GAVI', 'Blog – Holali David GAVI',
+			'Articles by Holali David GAVI.', 'Articles de Holali David GAVI.', 'Artículos de Holali David GAVI.' ),
+		'watch'          => array( 'Tech watch – Holali David GAVI', 'Veille – Holali David GAVI', 'Vigilancia – Holali David GAVI',
+			'Tech watch on cloud and cybersecurity.', 'Veille technologique cloud et cybersécurité.', 'Vigilancia tecnológica sobre cloud y ciberseguridad.' ),
+		'legal'          => array( 'Legal notice – Holali David GAVI', 'Mentions légales – Holali David GAVI', 'Aviso legal – Holali David GAVI',
+			'Legal notice and privacy policy.', 'Mentions légales et politique de confidentialité.', 'Aviso legal y política de privacidad.' ),
+	);
 
+	$content = array(
 		/* ── General ── */
 		'general_name'           => 'Holali David GAVI',
 		'general_email'          => 'g.holalidavid@gmail.com',
-		'general_location'       => 'Saint-Denis (93), Île-de-France',
+		'general_location'       => 'Aubervilliers (93300), Île-de-France',
 		'contact_github'         => 'https://github.com/g-holali-david',
 		'contact_github_handle'  => 'g-holali-david',
 		'contact_linkedin'       => 'https://www.linkedin.com/in/holali-david-g-4a434631a/',
 		'contact_phone'          => '07 63 15 25 91',
 		'default_lang'           => 'en',
-		'logo_monogram'          => 'HD',
-		'logo_text'              => 'GAVI',
 		'show_rqth'              => false,
 		'footer_name'            => 'Holali David GAVI',
-		'footer_year'            => '2026',
 
-		/* ── Splash ── */
+		/* ── Titles used by older settings ── */
 		'splash_title'           => 'Holali David GAVI',
-		'splash_subtitle_en'     => 'Cloud & DevOps Engineer',
-		'splash_subtitle_fr'     => 'Ingénieur Cloud & DevOps',
-		'splash_subtitle_es'     => 'Ingeniero Cloud & DevOps',
-		'splash_btn_en'          => 'Explore',
-		'splash_btn_fr'          => 'Explorer',
-		'splash_btn_es'          => 'Explorar',
-		'splash_cv_btn_en'       => 'Download CV',
-		'splash_cv_btn_fr'       => 'Télécharger CV',
-		'splash_cv_btn_es'       => 'Descargar CV',
-		'terminal_enabled'       => true,
+		'splash_subtitle_en'     => 'DevOps / Cloud Native Engineer',
+		'splash_subtitle_fr'     => 'Ingénieur DevOps / Cloud Native',
+		'splash_subtitle_es'     => 'Ingeniero DevOps / Cloud Native',
+		'about_badge_en'         => 'DevOps / Cloud Native Engineer',
+		'about_badge_fr'         => 'Ingénieur DevOps / Cloud Native',
+		'about_badge_es'         => 'Ingeniero DevOps / Cloud Native',
+		'footer_desc_en'         => 'DevOps / Cloud Native Engineer',
+		'footer_desc_fr'         => 'Ingénieur DevOps / Cloud Native',
+		'footer_desc_es'         => 'Ingeniero DevOps / Cloud Native',
+		'seo_job_title'          => 'DevOps / Cloud Native Engineer',
+		'seo_company'            => 'Dassault Systèmes',
 
-		/* ── Terminal lines ── */
-		'terminal_lines_en'      => json_encode( array(
-			array( 'cmd' => '$ whoami', 'out' => 'Holali David GAVI — Cloud & DevOps Engineer' ),
-			array( 'cmd' => '$ kubectl get skills', 'out' => 'Docker ✓  Kubernetes ✓  Helm ✓  Java ✓' ),
-			array( 'cmd' => '$ cat stack.txt', 'out' => 'Kubernetes | Docker | Terraform | CI/CD | Cloud Security' ),
-			array( 'cmd' => '$ cat motivation.txt', 'out' => 'Curious. Persistent. Passionate about code.' ),
-		) ),
-		'terminal_lines_fr'      => json_encode( array(
-			array( 'cmd' => '$ whoami', 'out' => 'Holali David GAVI — Ingénieur Cloud & DevOps' ),
-			array( 'cmd' => '$ kubectl get skills', 'out' => 'Docker ✓  Kubernetes ✓  Helm ✓  Java ✓' ),
-			array( 'cmd' => '$ cat stack.txt', 'out' => 'Kubernetes | Docker | Terraform | CI/CD | Sécurité Cloud' ),
-			array( 'cmd' => '$ cat motivation.txt', 'out' => 'Curieux. Persévérant. Passionné par le code.' ),
-		) ),
+		/* ── Hidden /terminal page ── */
+		'term_page_prompt'      => '$',
+		'term_page_welcome_en'  => 'Type "help" for the list of commands.',
+		'term_page_welcome_fr'  => 'Tapez "help" pour la liste des commandes.',
 
-		/* ── About ── */
-		'about_badge_en'         => 'Cloud & DevOps Engineer',
-		'about_badge_fr'         => 'Ingénieur Cloud & DevOps',
-		'about_badge_es'         => 'Ingeniero Cloud & DevOps',
-		'about_quote_en'         => "I don't look for the easy way, I look to understand.",
-		'about_quote_fr'         => 'Je ne cherche pas la facilité, je cherche à comprendre.',
-		'about_quote_es'         => 'No busco lo fácil, busco comprender.',
-		'about_text_en'          => "<p>I'm a curious person. When I discover a topic that interests me, I dig until I truly understand how it works. That's how I learned IT — on my own, in the evenings, before it even became my job.</p><p>What I love most about this job is that when I'm working, everything else fades away. Coding gives me real satisfaction, a kind of flow where hours pass without me noticing.</p><p>I'm patient and persistent. Changing careers twice, starting studies from scratch, juggling two Master's degrees in evening classes while working — that takes discipline. But I don't see it as a sacrifice. I genuinely enjoy learning.</p><p>I always strive for quality in what I produce. For me, IT should automate as much as possible, simplify, and make things more reliable.</p><p>When I understand something, I need to structure it and document it — first for myself, then for others. I believe that well-commented code and clear documentation is a form of respect for those who come after. I'm not the loudest in a team, but you can count on me.</p>",
-		'about_text_fr'          => "<p>Je suis quelqu'un de curieux. Quand je découvre un sujet qui m'intéresse, je creuse jusqu'à comprendre comment ça fonctionne vraiment. C'est comme ça que j'ai appris l'informatique — seul, le soir, avant même d'en faire mon métier.</p><p>Ce que j'aime le plus dans ce métier, c'est qu'en travaillant j'oublie tout le reste. Le code me procure une vraie satisfaction, une sorte de flow où les heures passent sans que je m'en rende compte.</p><p>Je suis patient et persévérant. Changer de carrière deux fois, reprendre les études à zéro, cumuler deux masters en cours du soir tout en travaillant — ça demande de la discipline. Mais je ne vois pas ça comme un sacrifice, j'aime apprendre.</p><p>Je cherche toujours la qualité dans ce que je produis. Pour moi, l'informatique doit servir à automatiser au maximum, à simplifier, à rendre les choses plus fiables.</p><p>Quand je comprends quelque chose, j'ai besoin de le structurer et de le documenter — d'abord pour moi, puis pour les autres. Je crois que du code bien commenté et une documentation claire, c'est une forme de respect envers ceux qui passeront après. Je ne suis pas le plus bruyant dans une équipe, mais on peut compter sur moi.</p>",
-
-		/* ── Stats ── */
-		'stat_1_number'          => '1+',
-		'stat_1_label_en'        => 'Year in DevOps & Cloud',
-		'stat_1_label_fr'        => 'An en DevOps & Cloud',
-		'stat_1_label_es'        => 'Año en DevOps & Cloud',
-		'stat_2_number'          => '8',
-		'stat_2_label_en'        => 'Technical projects',
-		'stat_2_label_fr'        => 'Projets techniques',
-		'stat_2_label_es'        => 'Proyectos técnicos',
-		'stat_3_number'          => '2',
-		'stat_3_label_en'        => "Parallel Master's degrees",
-		'stat_3_label_fr'        => 'Mastères en parallèle',
-		'stat_3_label_es'        => 'Másteres en paralelo',
-		'stat_4_number'          => '3',
-		'stat_4_label_en'        => 'Languages spoken',
-		'stat_4_label_fr'        => 'Langues parlées',
-		'stat_4_label_es'        => 'Idiomas hablados',
-
-		/* ── Traits ── */
-		'trait_1_en' => 'Curious',     'trait_1_fr' => 'Curieux',     'trait_1_es' => 'Curioso',     'trait_1_desc_en' => 'Self-taught since 2016, I learn because I want to, not because I have to', 'trait_1_desc_fr' => "Autodidacte depuis 2016, j'apprends par envie, pas par obligation", 'trait_1_desc_es' => 'Autodidacta desde 2016, aprendo por ganas, no por obligación', 'trait_1_color' => '#06B6D4',
-		'trait_2_en' => 'Passionate',  'trait_2_fr' => 'Passionné',   'trait_2_es' => 'Apasionado',  'trait_2_desc_en' => "Coding makes everything else fade away, it's where I feel at home", 'trait_2_desc_fr' => 'Le code me fait oublier tout le reste, c\'est là que je me sens à ma place', 'trait_2_desc_es' => 'El código me hace olvidar todo lo demás, es donde me siento en casa', 'trait_2_color' => '#818CF8',
-		'trait_3_en' => 'Persistent',  'trait_3_fr' => 'Persévérant', 'trait_3_es' => 'Persistente', 'trait_3_desc_en' => "Two career changes, two parallel Master's degrees, still standing", 'trait_3_desc_fr' => 'Deux reconversions, deux masters en parallèle, toujours debout', 'trait_3_desc_es' => 'Dos cambios de carrera, dos másteres en paralelo, sigo en pie', 'trait_3_color' => '#22C55E',
-		'trait_4_en' => 'Creative',    'trait_4_fr' => 'Créatif',     'trait_4_es' => 'Creativo',    'trait_4_desc_en' => 'A problem = a solution to build. That\'s what fuels my side projects', 'trait_4_desc_fr' => "Un problème = une solution à développer. C'est ce qui alimente mes projets perso", 'trait_4_desc_es' => 'Un problema = una solución por construir. Eso alimenta mis proyectos personales', 'trait_4_color' => '#F59E0B',
-		'trait_5_en' => 'Rigorous',    'trait_5_fr' => 'Rigoureux',   'trait_5_es' => 'Riguroso',    'trait_5_desc_en' => 'I chase quality, I document everything, I aim for perfection', 'trait_5_desc_fr' => 'Je cherche la qualité, je documente, je vise la perfection', 'trait_5_desc_es' => 'Busco la calidad, documento todo, apunto a la perfección', 'trait_5_color' => '#06B6D4',
-		'trait_6_en' => 'Pragmatic',   'trait_6_fr' => 'Pragmatique', 'trait_6_es' => 'Pragmático',  'trait_6_desc_en' => 'IT should automate and simplify, not add complexity', 'trait_6_desc_fr' => "L'informatique doit automatiser et simplifier, pas compliquer", 'trait_6_desc_es' => 'La informática debe automatizar y simplificar, no complicar', 'trait_6_color' => '#818CF8',
-		'trait_7_en' => 'Reliable',    'trait_7_fr' => 'Fiable',      'trait_7_es' => 'Fiable',      'trait_7_desc_en' => 'Not the loudest, but you can count on me. I document, I structure, I leave things clear', 'trait_7_desc_fr' => 'Pas le plus bruyant, mais on peut compter sur moi. Je documente, je structure, je laisse les choses claires', 'trait_7_desc_es' => 'No soy el más ruidoso, pero se puede contar conmigo', 'trait_7_color' => '#22C55E',
-
-		/* ── Content below is now managed via CPTs (Experience, Projects, Education, Skills) ── */
-		/* ── Use the Portfolio Setup page to import demo CPT data ── */
-
-		/* ── Self-learning ── */
-		'selflearn_title_en' => 'Self-learning & online courses',
-		'selflearn_title_fr' => 'Autoformation & cours en ligne',
-		'selflearn_title_es' => 'Autoformación y cursos en línea',
-		'selflearn_list'     => "Introduction to Cybersecurity (Cisco)\nNetworking Basics (Cisco)\nNetworking Devices and Initial Configuration (Cisco)\nAWS Solutions Architect Associate Cert Prep (LinkedIn)\nDocker for Developers (LinkedIn)\nLearning Docker (LinkedIn)\nObject-Oriented Programming with Python (OpenClassrooms)\nPython Basics (OpenClassrooms)\nCoding with JavaScript (OpenClassrooms)\nProgramming in C++ (OpenClassrooms)\nVirtualization Environments (OpenClassrooms)\nInformation Systems Discovery (OpenClassrooms)\nPowerShell Scripts on Windows Server (OpenClassrooms)\nFront-end Environment Setup (OpenClassrooms)",
-
-		/* ── Footer ── */
-		'footer_desc_en'     => 'Cloud & DevOps Engineer. Containerization, Kubernetes, CI/CD automation and cloud security.',
-		'footer_desc_fr'     => 'Ingénieur Cloud & DevOps. Conteneurisation, Kubernetes, automatisation CI/CD et sécurité cloud.',
-		'footer_desc_es'     => 'Ingeniero Cloud & DevOps. Contenedorización, Kubernetes, automatización CI/CD y seguridad cloud.',
+		/* ── Contact details ── */
+		'gh_repos_enabled'      => false,
+		'copy_feedback_en'      => 'Copied',
+		'copy_feedback_fr'      => 'Copié',
+		'copy_feedback_es'      => 'Copiado',
 
 		/* ── Legal ── */
 		'legal_hosting_name'    => 'OVH / o2switch',
 		'legal_hosting_address' => 'France',
 
-		/* ── SEO ── */
-		'seo_job_title'      => 'Cloud & DevOps Engineer',
-		'seo_company'        => '',
-		'seo_home_title_en'  => 'Holali David GAVI — Cloud & DevOps Engineer Portfolio',
-		'seo_home_title_fr'  => 'Holali David GAVI — Portfolio Ingénieur Cloud & DevOps',
-		'seo_home_title_es'  => 'Holali David GAVI — Portfolio Ingeniero Cloud & DevOps',
-		'seo_home_desc_en'   => 'Portfolio of Holali David GAVI — Cloud & DevOps Engineer. Specialized in Docker/Kubernetes containerization, CI/CD automation and cloud security.',
-		'seo_home_desc_fr'   => 'Portfolio de Holali David GAVI — Ingénieur Cloud & DevOps. Spécialisé en conteneurisation Docker/Kubernetes, automatisation CI/CD et sécurité cloud.',
-		'seo_home_desc_es'   => 'Portfolio de Holali David GAVI — Ingeniero Cloud & DevOps. Especializado en contenedorización Docker/Kubernetes, automatización CI/CD y seguridad cloud.',
-		'seo_about_title_en' => 'About – Holali David GAVI',
-		'seo_about_title_fr' => 'À propos – Holali David GAVI',
-		'seo_about_title_es' => 'Sobre mí – Holali David GAVI',
-		'seo_about_desc_en'  => 'Learn about Holali David GAVI — background, values, career journey from psychology to DevOps engineering.',
-		'seo_about_desc_fr'  => 'Découvrez Holali David GAVI — parcours, valeurs, de la psychologie à l\'ingénierie DevOps.',
-		'seo_about_desc_es'  => 'Descubre a Holali David GAVI — trayectoria, valores, de la psicología a la ingeniería DevOps.',
-		'seo_skills_title_en'  => 'Skills – Holali David GAVI',
-		'seo_skills_title_fr'  => 'Compétences – Holali David GAVI',
-		'seo_skills_title_es'  => 'Habilidades – Holali David GAVI',
-		'seo_skills_desc_en'   => 'Technical skills: Docker, Kubernetes, Terraform, CI/CD, Python, cloud security and infrastructure automation.',
-		'seo_skills_desc_fr'   => 'Compétences techniques : Docker, Kubernetes, Terraform, CI/CD, Python, sécurité cloud et automatisation d\'infrastructure.',
-		'seo_skills_desc_es'   => 'Habilidades técnicas: Docker, Kubernetes, Terraform, CI/CD, Python, seguridad cloud y automatización de infraestructura.',
-		'seo_experience_title_en' => 'Experience – Holali David GAVI',
-		'seo_experience_title_fr' => 'Expérience – Holali David GAVI',
-		'seo_experience_title_es' => 'Experiencia – Holali David GAVI',
-		'seo_experience_desc_en'  => 'Professional experience: Cloud & DevOps Engineer with hands-on Kubernetes containerization and CI/CD pipeline automation.',
-		'seo_experience_desc_fr'  => 'Expérience professionnelle : Ingénieur Cloud & DevOps avec expertise en conteneurisation Kubernetes et automatisation de pipelines CI/CD.',
-		'seo_experience_desc_es'  => 'Experiencia profesional: Ingeniero Cloud & DevOps con expertise en contenedorización Kubernetes y automatización de pipelines CI/CD.',
-		'seo_projects_title_en' => 'Projects – Holali David GAVI',
-		'seo_projects_title_fr' => 'Projets – Holali David GAVI',
-		'seo_projects_title_es' => 'Proyectos – Holali David GAVI',
-		'seo_projects_desc_en'  => 'Portfolio projects: Kubernetes deployments, CI/CD pipelines, infrastructure as code, full-stack applications.',
-		'seo_projects_desc_fr'  => 'Projets portfolio : déploiements Kubernetes, pipelines CI/CD, infrastructure as code, applications full-stack.',
-		'seo_projects_desc_es'  => 'Proyectos portfolio: despliegues Kubernetes, pipelines CI/CD, infraestructura como código, aplicaciones full-stack.',
-		'seo_education_title_en' => 'Education – Holali David GAVI',
-		'seo_education_title_fr' => 'Formation – Holali David GAVI',
-		'seo_education_title_es' => 'Formación – Holali David GAVI',
-		'seo_education_desc_en'  => 'Education: IPSSI Paris (Cloud & DevOps), CNAM, Université de Lille. Self-taught developer turned DevOps engineer.',
-		'seo_education_desc_fr'  => 'Formation : IPSSI Paris (Cloud & DevOps), CNAM, Université de Lille. Autodidacte devenu ingénieur DevOps.',
-		'seo_education_desc_es'  => 'Formación: IPSSI París (Cloud & DevOps), CNAM, Universidad de Lille. Autodidacta convertido en ingeniero DevOps.',
-		'seo_contact_title_en' => 'Contact – Holali David GAVI',
-		'seo_contact_title_fr' => 'Contact – Holali David GAVI',
-		'seo_contact_title_es' => 'Contacto – Holali David GAVI',
-		'seo_contact_desc_en'  => 'Get in touch with Holali David GAVI for DevOps, cloud engineering, or collaboration opportunities.',
-		'seo_contact_desc_fr'  => 'Contactez Holali David GAVI pour des opportunités DevOps, cloud engineering ou collaboration.',
-		'seo_contact_desc_es'  => 'Contacta con Holali David GAVI para oportunidades DevOps, cloud engineering o colaboración.',
-		'seo_certifications_title_en' => 'Certifications – Holali David GAVI',
-		'seo_certifications_title_fr' => 'Certifications – Holali David GAVI',
-		'seo_certifications_title_es' => 'Certificaciones – Holali David GAVI',
-		'seo_certifications_desc_en'  => 'Professional certifications: Cisco Cybersecurity, Docker, Kubernetes, and cloud platforms.',
-		'seo_certifications_desc_fr'  => 'Certifications professionnelles : Cisco Cybersécurité, Docker, Kubernetes et plateformes cloud.',
-		'seo_certifications_desc_es'  => 'Certificaciones profesionales: Cisco Ciberseguridad, Docker, Kubernetes y plataformas cloud.',
-		'seo_watch_title_en' => 'Tech Watch – Holali David GAVI',
-		'seo_watch_title_fr' => 'Veille Tech – Holali David GAVI',
-		'seo_watch_title_es' => 'Vigilancia Tech – Holali David GAVI',
-		'seo_watch_desc_en'  => 'Tech watch: articles and resources on DevOps, cloud-native, Kubernetes, and infrastructure trends.',
-		'seo_watch_desc_fr'  => 'Veille technologique : articles et ressources sur le DevOps, le cloud-native, Kubernetes et les tendances infra.',
-		'seo_watch_desc_es'  => 'Vigilancia tecnológica: artículos y recursos sobre DevOps, cloud-native, Kubernetes y tendencias infra.',
-		'seo_blog_title_en' => 'Blog – Holali David GAVI',
-		'seo_blog_title_fr' => 'Blog – Holali David GAVI',
-		'seo_blog_title_es' => 'Blog – Holali David GAVI',
-		'seo_blog_desc_en'  => 'Blog posts about DevOps engineering, cloud architecture, and lessons from the field.',
-		'seo_blog_desc_fr'  => 'Articles de blog sur l\'ingénierie DevOps, l\'architecture cloud et les leçons du terrain.',
-		'seo_blog_desc_es'  => 'Artículos de blog sobre ingeniería DevOps, arquitectura cloud y lecciones del terreno.',
-		'seo_timeline_title_en' => 'Timeline – Holali David GAVI',
-		'seo_timeline_title_fr' => 'Parcours – Holali David GAVI',
-		'seo_timeline_title_es' => 'Trayectoria – Holali David GAVI',
-		'seo_timeline_desc_en'  => 'Career timeline: from self-taught developer to DevOps Engineer at Dassault Systèmes.',
-		'seo_timeline_desc_fr'  => 'Parcours professionnel : d\'autodidacte à Ingénieur DevOps chez Dassault Systèmes.',
-		'seo_timeline_desc_es'  => 'Trayectoria profesional: de autodidacta a Ingeniero DevOps en Dassault Systèmes.',
-		'seo_stack_title_en' => 'Tech Stack – Holali David GAVI',
-		'seo_stack_title_fr' => 'Stack Technique – Holali David GAVI',
-		'seo_stack_title_es' => 'Stack Técnico – Holali David GAVI',
-		'seo_stack_desc_en'  => 'Technical stack: tools and technologies used daily — Docker, Kubernetes, Helm, Terraform, GitLab CI.',
-		'seo_stack_desc_fr'  => 'Stack technique : outils et technologies du quotidien — Docker, Kubernetes, Helm, Terraform, GitLab CI.',
-		'seo_stack_desc_es'  => 'Stack técnico: herramientas y tecnologías del día a día — Docker, Kubernetes, Helm, Terraform, GitLab CI.',
-		'seo_testimonials_title_en' => 'Testimonials – Holali David GAVI',
-		'seo_testimonials_title_fr' => 'Témoignages – Holali David GAVI',
-		'seo_testimonials_title_es' => 'Testimonios – Holali David GAVI',
-		'seo_testimonials_desc_en'  => 'What colleagues and collaborators say about working with Holali David GAVI.',
-		'seo_testimonials_desc_fr'  => 'Ce que disent collègues et collaborateurs de leur travail avec Holali David GAVI.',
-		'seo_testimonials_desc_es'  => 'Lo que dicen colegas y colaboradores sobre trabajar con Holali David GAVI.',
-		'seo_newsletter_title_en' => 'Newsletter – Holali David GAVI',
-		'seo_newsletter_title_fr' => 'Newsletter – Holali David GAVI',
-		'seo_newsletter_title_es' => 'Newsletter – Holali David GAVI',
-		'seo_newsletter_desc_en'  => 'Subscribe to receive updates on DevOps, cloud engineering, and new projects.',
-		'seo_newsletter_desc_fr'  => 'Abonnez-vous pour recevoir les actualités DevOps, cloud engineering et nouveaux projets.',
-		'seo_newsletter_desc_es'  => 'Suscríbete para recibir novedades sobre DevOps, cloud engineering y nuevos proyectos.',
-		'seo_uses_title_en' => 'Uses – Holali David GAVI',
-		'seo_uses_title_fr' => 'Mon Setup – Holali David GAVI',
-		'seo_uses_title_es' => 'Mi Setup – Holali David GAVI',
-		'seo_uses_desc_en'  => 'Hardware, software, and tools I use daily for DevOps engineering and development.',
-		'seo_uses_desc_fr'  => 'Matériel, logiciels et outils que j\'utilise quotidiennement pour l\'ingénierie DevOps.',
-		'seo_uses_desc_es'  => 'Hardware, software y herramientas que uso a diario para ingeniería DevOps y desarrollo.',
-		'seo_roadmap_title_en' => 'Roadmap – Holali David GAVI',
-		'seo_roadmap_title_fr' => 'Objectifs – Holali David GAVI',
-		'seo_roadmap_title_es' => 'Hoja de Ruta – Holali David GAVI',
-		'seo_roadmap_desc_en'  => 'Career goals and learning roadmap: certifications, technologies, and professional milestones.',
-		'seo_roadmap_desc_fr'  => 'Objectifs de carrière et plan d\'apprentissage : certifications, technologies et jalons professionnels.',
-		'seo_roadmap_desc_es'  => 'Objetivos profesionales y hoja de ruta: certificaciones, tecnologías y hitos profesionales.',
-		'seo_availability_title_en' => 'Availability – Holali David GAVI',
-		'seo_availability_title_fr' => 'Disponibilité – Holali David GAVI',
-		'seo_availability_title_es' => 'Disponibilidad – Holali David GAVI',
-		'seo_availability_desc_en'  => 'Current availability, preferred contract types, and how to work together.',
-		'seo_availability_desc_fr'  => 'Disponibilité actuelle, types de contrats recherchés et comment collaborer.',
-		'seo_availability_desc_es'  => 'Disponibilidad actual, tipos de contrato preferidos y cómo colaborar.',
-		'seo_legal_title_en' => 'Legal Notice – Holali David GAVI',
-		'seo_legal_title_fr' => 'Mentions Légales – Holali David GAVI',
-		'seo_legal_title_es' => 'Aviso Legal – Holali David GAVI',
-		'seo_legal_desc_en'  => 'Legal notice, privacy policy, and cookie information.',
-		'seo_legal_desc_fr'  => 'Mentions légales, politique de confidentialité et informations sur les cookies.',
-		'seo_legal_desc_es'  => 'Aviso legal, política de privacidad e información sobre cookies.',
+		/* ── Roadmap (secondary page, CV goals only) ── */
+		'roadmap_cat_1_en' => 'Education', 'roadmap_cat_1_fr' => 'Formation', 'roadmap_cat_1_icon' => '',
+		'roadmap_cat_1_items' => "[ ] Mastère Cybersécurité & Cloud Computing, IPSSI (2024 – 2026)",
+		'roadmap_cat_2_en' => 'Career', 'roadmap_cat_2_fr' => 'Objectif professionnel', 'roadmap_cat_2_icon' => '',
+		'roadmap_cat_2_items' => "[ ] CDI au sein de Dassault Systèmes, sur des projets Cloud, DevOps, Platform Engineering ou SRE",
+		'roadmap_cat_3_en' => '', 'roadmap_cat_3_fr' => '', 'roadmap_cat_3_icon' => '', 'roadmap_cat_3_items' => '',
 
-		/* ── Visual effects ── */
-		'fx_particles'       => true,
-		'fx_particles_color' => 'rgba(6,182,212,0.4)',
-		'fx_particles_speed' => 1,
-		'fx_particles_density' => 50,
-		'fx_counter'         => true,
-		'fx_progress_bar'    => true,
-		'fx_progress_color'  => '#06B6D4',
-		'fx_grain'           => false,
-		'fx_parallax'        => false,
-		'fx_custom_cursor'   => false,
-
-		/* ── Easter eggs ── */
-		'konami_enabled'     => true,
-		'konami_msg_en'      => "🎮 You know the Konami code? We're going to get along.",
-		'konami_msg_fr'      => '🎮 Tu connais le Konami code ? On va bien s\'entendre.',
-		'konami_msg_es'      => '🎮 ¿Conoces el código Konami? Nos vamos a llevar bien.',
-
-		/* ── Terminal page ── */
-		'term_page_prompt'      => 'visitor@hdgavi:~$',
-		'term_page_welcome_en'  => 'Welcome to my terminal. Type "help" for available commands.',
-		'term_page_welcome_fr'  => 'Bienvenue dans mon terminal. Tape "help" pour voir les commandes disponibles.',
-
-		/* ── GitHub repos ── */
-		'gh_repos_enabled'      => true,
-		'limit_github_repos'    => 6,
-
-		/* ── Contact labels ── */
-		'form_name_en'    => 'Your name',
-		'form_name_fr'    => 'Votre nom',
-		'form_email_en'   => 'Your email',
-		'form_email_fr'   => 'Votre email',
-		'form_message_en' => 'Your message',
-		'form_message_fr' => 'Votre message',
-		'form_btn_en'     => 'Send',
-		'form_btn_fr'     => 'Envoyer',
-
-		/* ── Certifications, Timeline, Stack, Testimonials → now managed via CPTs ── */
-
-		/* ── Uses (equipment & tools) ── */
-		'uses_cat_1_en' => 'Development', 'uses_cat_1_fr' => 'Développement', 'uses_cat_1_icon' => '💻', 'uses_cat_1_items' => "VS Code — Main editor\nIntelliJ IDEA — Java projects\nGit — Version control\nDocker Desktop — Containerization",
-		'uses_cat_2_en' => 'DevOps Tools', 'uses_cat_2_fr' => 'Outils DevOps', 'uses_cat_2_icon' => '⚙️', 'uses_cat_2_items' => "kubectl — Kubernetes CLI\nHelm — K8s package manager\nTerraform — IaC\nAnsible — Configuration management",
-		'uses_cat_3_en' => 'Terminal & OS', 'uses_cat_3_fr' => 'Terminal & OS', 'uses_cat_3_icon' => '🖥️', 'uses_cat_3_items' => "Ubuntu 24.04 — Primary OS\nzsh + oh-my-zsh — Shell\nWindows 11 — Secondary\nWireGuard — VPN",
-
-		/* ── Roadmap ── */
-		'roadmap_cat_1_en' => 'Certifications', 'roadmap_cat_1_fr' => 'Certifications', 'roadmap_cat_1_icon' => '🎓', 'roadmap_cat_1_items' => "[x] Cisco Introduction to Cybersecurity\n[x] Cisco Networking Basics\n[ ] AWS Solutions Architect Associate\n[ ] CKA (Certified Kubernetes Administrator)",
-		'roadmap_cat_2_en' => 'Technical Skills', 'roadmap_cat_2_fr' => 'Compétences techniques', 'roadmap_cat_2_icon' => '🔧', 'roadmap_cat_2_items' => "[x] Docker multi-stage builds\n[x] Helm Charts\n[ ] ArgoCD / GitOps\n[ ] Service Mesh (Istio)\n[ ] Go lang",
-		'roadmap_cat_3_en' => 'Career Goals', 'roadmap_cat_3_fr' => 'Objectifs carrière', 'roadmap_cat_3_icon' => '🎯', 'roadmap_cat_3_items' => "[ ] Complete Master's in Cybersecurity & Cloud\n[ ] Transition to full-time DevOps/SRE Engineer\n[ ] Contribute to open source Kubernetes projects",
-
-		/* ── Availability ── */
-		'avail_status'     => 'apprenticeship',
-		'avail_detail_en'  => 'Currently in apprenticeship at Dassault Systèmes (until Sept. 2026). Open to discussions for post-graduation opportunities.',
-		'avail_detail_fr'  => 'Actuellement en alternance chez Dassault Systèmes (jusqu\'en sept. 2026). Ouvert aux discussions pour des opportunités post-diplôme.',
-		'avail_next_date'  => 'September 2026',
-		'avail_looking_en' => 'A DevOps / Cloud / SRE engineer position in a company that values automation, reliability and continuous learning.',
-		'avail_looking_fr' => 'Un poste d\'ingénieur DevOps / Cloud / SRE dans une entreprise qui valorise l\'automatisation, la fiabilité et l\'apprentissage continu.',
-		'avail_contracts'  => 'CDI, Freelance',
-		'avail_salary_range'       => '42-50K€ (negotiable)',
-		'avail_preferred_stack'    => 'Docker, Kubernetes, Helm, Terraform, CI/CD, Linux, Python',
-		'avail_location_pref_en'   => 'Remote / Île-de-France / Hybrid',
-		'avail_location_pref_fr'   => 'Télétravail / Île-de-France / Hybride',
-		'avail_location_pref_es'   => 'Remoto / Île-de-France / Híbrido',
-		'avail_experience_summary' => '2+ years Cloud & DevOps (Dassault Systèmes)',
-
-		/* ── Testimonials → managed via CPT hdgavi_testimonial ── */
+		/* ── Uses (secondary page): no emoji icons ── */
+		'uses_cat_1_icon' => '', 'uses_cat_2_icon' => '', 'uses_cat_3_icon' => '',
 	);
+
+	foreach ( $seo as $page => $v ) {
+		$content[ 'seo_' . $page . '_title_en' ] = $v[0];
+		$content[ 'seo_' . $page . '_title_fr' ] = $v[1];
+		$content[ 'seo_' . $page . '_title_es' ] = $v[2];
+		$content[ 'seo_' . $page . '_desc_en' ]  = $v[3];
+		$content[ 'seo_' . $page . '_desc_fr' ]  = $v[4];
+		$content[ 'seo_' . $page . '_desc_es' ]  = $v[5];
+	}
+	return $content;
+}
+
+/**
+ * Settings that the "sync with the CV" action always overwrites (facts that changed with the new CV).
+ */
+function hdgavi_cv_sync_keys() {
+	$keys = array( 'general_location', 'splash_subtitle_en', 'splash_subtitle_fr', 'splash_subtitle_es',
+		'about_badge_en', 'about_badge_fr', 'about_badge_es', 'footer_desc_en', 'footer_desc_fr', 'footer_desc_es',
+		'seo_job_title', 'seo_company', 'gh_repos_enabled', 'show_rqth', 'term_page_prompt', 'copy_feedback_en', 'copy_feedback_fr', 'copy_feedback_es',
+		'roadmap_cat_1_en', 'roadmap_cat_1_fr', 'roadmap_cat_1_icon', 'roadmap_cat_1_items',
+		'roadmap_cat_2_en', 'roadmap_cat_2_fr', 'roadmap_cat_2_icon', 'roadmap_cat_2_items',
+		'roadmap_cat_3_en', 'roadmap_cat_3_fr', 'roadmap_cat_3_icon', 'roadmap_cat_3_items',
+		'uses_cat_1_icon', 'uses_cat_2_icon', 'uses_cat_3_icon' );
+	foreach ( array_keys( hdgavi_get_demo_content() ) as $key ) {
+		if ( 0 === strpos( $key, 'seo_' ) ) $keys[] = $key;
+	}
+	return array_unique( $keys );
 }
 
 /**
@@ -1384,73 +1231,8 @@ function hdgavi_import_demo_articles( $force = false ) {
  * Demo resources (CPT hdgavi_resource)
  */
 function hdgavi_get_demo_resources() {
-    return array(
-        array(
-            'title'   => 'Terraform AWS Starter Modules',
-            'meta'    => array(
-                '_res_desc_en'       => 'Production-ready Terraform modules for AWS: VPC, ECS, RDS, S3, CloudFront. Includes best practices for security groups, IAM roles, and state management.',
-                '_res_desc_fr'       => 'Modules Terraform prêts pour la production sur AWS : VPC, ECS, RDS, S3, CloudFront. Inclut les bonnes pratiques pour les groupes de sécurité, rôles IAM et gestion d\'état.',
-                '_res_desc_es'       => 'Módulos Terraform listos para producción en AWS: VPC, ECS, RDS, S3, CloudFront. Incluye buenas prácticas para grupos de seguridad, roles IAM y gestión de estado.',
-                '_res_type'          => 'free',
-                '_res_gated'         => '1',
-                '_res_file_format'   => 'HCL / ZIP',
-                '_res_icon'          => '🏗️',
-            ),
-            'category' => 'Terraform',
-        ),
-        array(
-            'title'   => 'Kubernetes Cheat Sheet',
-            'meta'    => array(
-                '_res_desc_en'       => 'Comprehensive kubectl cheat sheet with common commands for pods, deployments, services, configmaps, secrets, and debugging. PDF format, printable A4.',
-                '_res_desc_fr'       => 'Aide-mémoire kubectl complet avec les commandes courantes pour les pods, déploiements, services, configmaps, secrets et débogage. Format PDF, imprimable A4.',
-                '_res_desc_es'       => 'Hoja de referencia completa de kubectl con comandos comunes para pods, deployments, services, configmaps, secrets y depuración. Formato PDF, imprimible A4.',
-                '_res_type'          => 'free',
-                '_res_gated'         => '',
-                '_res_file_format'   => 'PDF',
-                '_res_icon'          => '📋',
-            ),
-            'category' => 'Cheat Sheets',
-        ),
-        array(
-            'title'   => 'Docker Compose Templates Collection',
-            'meta'    => array(
-                '_res_desc_en'       => '15+ production-ready Docker Compose templates: LAMP, MERN, monitoring (Prometheus + Grafana), CI/CD runners, databases, and reverse proxy setups.',
-                '_res_desc_fr'       => '15+ templates Docker Compose prêts pour la production : LAMP, MERN, monitoring (Prometheus + Grafana), runners CI/CD, bases de données et reverse proxy.',
-                '_res_desc_es'       => '15+ plantillas Docker Compose listas para producción: LAMP, MERN, monitoreo (Prometheus + Grafana), runners CI/CD, bases de datos y configuraciones de reverse proxy.',
-                '_res_type'          => 'free',
-                '_res_gated'         => '1',
-                '_res_file_format'   => 'YAML / ZIP',
-                '_res_icon'          => '🐳',
-            ),
-            'category' => 'Docker',
-        ),
-        array(
-            'title'   => 'CI/CD Pipeline Blueprints',
-            'meta'    => array(
-                '_res_desc_en'       => 'Ready-to-use CI/CD pipeline configurations for GitHub Actions, GitLab CI, and Jenkins. Includes build, test, security scan, and deploy stages.',
-                '_res_desc_fr'       => 'Configurations de pipelines CI/CD prêtes à l\'emploi pour GitHub Actions, GitLab CI et Jenkins. Inclut les étapes build, test, scan sécurité et déploiement.',
-                '_res_desc_es'       => 'Configuraciones de pipelines CI/CD listas para usar en GitHub Actions, GitLab CI y Jenkins. Incluye etapas de build, test, escaneo de seguridad y despliegue.',
-                '_res_type'          => 'free',
-                '_res_gated'         => '1',
-                '_res_file_format'   => 'YAML / ZIP',
-                '_res_icon'          => '⚙️',
-            ),
-            'category' => 'CI/CD',
-        ),
-        array(
-            'title'   => 'Helm Chart Starter Kit',
-            'meta'    => array(
-                '_res_desc_en'       => 'Opinionated Helm chart template with values schema, health checks, HPA, PDB, NetworkPolicy, and ServiceMonitor. Perfect starting point for microservices.',
-                '_res_desc_fr'       => 'Template de chart Helm avec schéma de values, health checks, HPA, PDB, NetworkPolicy et ServiceMonitor. Point de départ idéal pour les microservices.',
-                '_res_desc_es'       => 'Plantilla de chart Helm con esquema de values, health checks, HPA, PDB, NetworkPolicy y ServiceMonitor. Punto de partida ideal para microservicios.',
-                '_res_type'          => 'paid',
-                '_res_price'         => '€9',
-                '_res_file_format'   => 'TAR.GZ',
-                '_res_icon'          => '⎈',
-            ),
-            'category' => 'Kubernetes',
-        ),
-    );
+    // No demo resources: the previous examples (templates, kits, prices) were invented.
+    return array();
 }
 
 function hdgavi_import_demo_resources( $force = false ) {
@@ -1501,179 +1283,54 @@ function hdgavi_import_demo_resources( $force = false ) {
 }
 
 /**
- * Demo experiences (CPT hdgavi_experience)
+ * Demo experiences (CPT hdgavi_experience) — from the CV, see inc/cv-content.php
  */
 function hdgavi_get_demo_experiences() {
-    return array(
-        array( 'title' => 'DevOps @ Dassault', 'meta' => array(
-            '_exp_featured' => '1',
-            '_exp_title_en' => 'DevOps Engineering Apprentice – K8s Containerization', '_exp_title_fr' => 'Apprenti Ingénieur DevOps – Conteneurisation K8s',
-            '_exp_company_en' => 'Dassault Systèmes', '_exp_company_fr' => 'Dassault Systèmes',
-            '_exp_period_en' => 'November 2024 – Present', '_exp_period_fr' => 'Novembre 2024 – Présent',
-            '_exp_location' => 'Vélizy-Villacoublay',
-            '_exp_desc_en' => 'Contributing to the On-Premise Container project: migrating 3DEXPERIENCE platform services from VM architecture to containerized deployment on Kubernetes.',
-            '_exp_desc_fr' => "Contribution au projet On-Premise Container : migration des services de la plateforme 3DEXPERIENCE d'une architecture VM vers un déploiement conteneurisé sur Kubernetes.",
-            '_exp_bullets_en' => "Built Docker images (Red Hat UBI 8) for platform services (Passport, FCS, 3DSpace)\nDeployed and orchestrated multi-service platform on Kubernetes via Helm Charts\nImplemented non-root security (securityContext, privilege separation) across all containers\nDeveloped the ODT Runner: CLI tool for test automation (Java, Docker, YAML, Chrome Headless)\nReduced test workflow from 9 manual steps to 3 automated steps",
-            '_exp_bullets_fr' => "Construction d'images Docker (Red Hat UBI 8) pour les services de la plateforme (Passport, FCS, 3DSpace)\nDéploiement et orchestration multi-services sur Kubernetes via Helm Charts\nImplémentation de la sécurité non-root (securityContext, séparation des privilèges)\nDéveloppement de l'ODT Runner : CLI pour l'automatisation des tests (Java, Docker, YAML)\nRéduction du workflow de tests de 9 étapes manuelles à 3 étapes automatisées",
-            '_exp_techs' => 'Docker, Kubernetes, Helm, Java, Linux, Bash, Python, CI/CD',
-        )),
-        array( 'title' => 'WordPress Dev', 'meta' => array(
-            '_exp_title_en' => 'WordPress Developer', '_exp_title_fr' => 'Développeur WordPress',
-            '_exp_company_en' => 'ACOMP Association', '_exp_company_fr' => 'ACOMP Association',
-            '_exp_period_en' => 'August – September 2024', '_exp_period_fr' => 'Août – Septembre 2024',
-            '_exp_location' => 'Paris',
-            '_exp_desc_en' => 'Developed and customized WordPress websites. Built reusable components and optimized mobile UX.',
-            '_exp_desc_fr' => 'Développement et personnalisation de sites WordPress (thèmes, plugins). Structuration de composants réutilisables et amélioration UX mobile.',
-            '_exp_techs' => 'WordPress, PHP, CSS',
-        )),
-        array( 'title' => 'Flutter Dev', 'meta' => array(
-            '_exp_title_en' => 'Mobile Developer (Flutter)', '_exp_title_fr' => 'Développeur multiplateforme (Flutter)',
-            '_exp_company_en' => 'Revotask', '_exp_company_fr' => 'Revotask',
-            '_exp_period_en' => 'August – September 2024', '_exp_period_fr' => 'Août – Septembre 2024',
-            '_exp_location' => 'Paris',
-            '_exp_desc_en' => 'Developed a cross-platform mobile application. Improved UI and prepared store deployment.',
-            '_exp_desc_fr' => "Développement d'une application mobile multiplateforme. Amélioration de l'interface utilisateur et préparation au déploiement stores.",
-            '_exp_techs' => 'Flutter, Dart',
-        )),
-        array( 'title' => 'IT Support', 'meta' => array(
-            '_exp_title_en' => 'IT Support Technician', '_exp_title_fr' => 'Technicien Support Informatique',
-            '_exp_company_en' => 'Lutèce Télécom', '_exp_company_fr' => 'Lutèce Télécom',
-            '_exp_period_en' => 'October – December 2023', '_exp_period_fr' => 'Octobre – Décembre 2023',
-            '_exp_location' => 'Pantin',
-            '_exp_desc_en' => 'User support, network equipment installation, Windows and Linux server deployment.',
-            '_exp_desc_fr' => "Support utilisateurs, installation et configuration d'équipements réseaux. Déploiement et configuration de serveurs Windows et Linux.",
-            '_exp_techs' => 'Windows Server, Linux, Networking',
-        )),
-        array( 'title' => 'Surveyor', 'meta' => array(
-            '_exp_title_en' => 'Surveyor – Networks & Infrastructure', '_exp_title_fr' => 'Géomètre – Réseaux & Infrastructures',
-            '_exp_company_en' => 'GRDF (apprenticeship) then SPAC (permanent)', '_exp_company_fr' => 'GRDF (alternance) puis SPAC (CDI)',
-            '_exp_period_en' => 'November 2018 – July 2022', '_exp_period_fr' => 'Novembre 2018 – Juillet 2022',
-            '_exp_desc_en' => 'Topographic surveys and georeferencing of gas network infrastructure. Technical plan production. Created an automated project management tool in Excel VBA.',
-            '_exp_desc_fr' => "Relevés topographiques et géoréférencement d'infrastructures réseaux. Production et mise à jour de plans techniques. Création d'un outil de gestion de projets automatisé en VBA.",
-            '_exp_techs' => 'Topography, AutoCAD, Excel VBA, GIS',
-        )),
-    );
+    return hdgavi_cv_experiences();
 }
 
 /**
- * Demo education (CPT hdgavi_education)
+ * Demo education (CPT hdgavi_education) — from the CV
  */
 function hdgavi_get_demo_educations() {
-    return array(
-        array( 'title' => 'M2 Cybersecurity', 'meta' => array(
-            '_edu_period' => '2024 – 2026', '_edu_school' => 'IPSSI – Paris',
-            '_edu_degree_en' => "Master's Degree in Cybersecurity & Cloud Computing", '_edu_degree_fr' => 'Mastère 1 & 2 Cybersécurité & Cloud Computing (Bac+5)',
-            '_edu_notes_en' => 'Apprenticeship at Dassault Systèmes.', '_edu_notes_fr' => 'En alternance chez Dassault Systèmes.',
-        )),
-        array( 'title' => 'M2 SIAD', 'meta' => array(
-            '_edu_period' => '2024 – 2025', '_edu_school' => 'CNAM – Paris',
-            '_edu_degree_en' => "Master's Degree in Information Systems & Business Intelligence", '_edu_degree_fr' => "Master 1 & 2 Systèmes d'Information & BI (Bac+5)",
-            '_edu_notes_en' => 'Apache Spark, decision-support systems, data architecture.', '_edu_notes_fr' => 'Apache Spark, systèmes décisionnels, architecture data.',
-        )),
-        array( 'title' => 'Licence', 'meta' => array(
-            '_edu_period' => '2024 – 2025', '_edu_school' => 'CNAM – Île-de-France',
-            '_edu_degree_en' => "Bachelor's Degree in Computer Science + Professional Bachelor's in Web, Mobile & BI", '_edu_degree_fr' => 'Licence Pro Web, Mobile & BI + Licence Informatique L3',
-        )),
-        array( 'title' => 'TP TSSR', 'meta' => array(
-            '_edu_period' => '2024', '_edu_school' => 'Ressources Formation – Torcy',
-            '_edu_degree_en' => 'Advanced Technician Certification — Systems & Networks', '_edu_degree_fr' => 'TP Technicien Supérieur Systèmes et Réseaux',
-        )),
-        array( 'title' => 'BTS Géomètre', 'meta' => array(
-            '_edu_period' => '2018 – 2020', '_edu_school' => 'EBTP – Vincennes',
-            '_edu_degree_en' => 'Higher National Diploma in Surveying & Topography', '_edu_degree_fr' => 'BTS Géomètre Topographe',
-            '_edu_notes_en' => 'Apprenticeship at GRDF.', '_edu_notes_fr' => 'En alternance chez GRDF.',
-        )),
-    );
+    return hdgavi_cv_educations();
 }
 
 /**
- * Demo certifications (CPT hdgavi_certification)
+ * Demo certifications (CPT hdgavi_certification) — none: the CV lists no certification
  */
 function hdgavi_get_demo_certifications() {
-    return array(
-        array( 'title' => 'Intro Cybersecurity', 'meta' => array( '_cert_name' => 'Introduction to Cybersecurity', '_cert_org' => 'Cisco', '_cert_status' => 'obtained', '_cert_date' => '2024' )),
-        array( 'title' => 'Networking Basics', 'meta' => array( '_cert_name' => 'Networking Basics', '_cert_org' => 'Cisco', '_cert_status' => 'obtained', '_cert_date' => '2024' )),
-        array( 'title' => 'Networking Devices', 'meta' => array( '_cert_name' => 'Networking Devices and Initial Configuration', '_cert_org' => 'Cisco', '_cert_status' => 'obtained', '_cert_date' => '2024' )),
-        array( 'title' => 'AWS SAA', 'meta' => array( '_cert_name' => 'AWS Solutions Architect Associate', '_cert_org' => 'Amazon Web Services', '_cert_status' => 'in-progress', '_cert_date' => '2025' )),
-        array( 'title' => 'CKA', 'meta' => array( '_cert_name' => 'Certified Kubernetes Administrator (CKA)', '_cert_org' => 'CNCF', '_cert_status' => 'planned', '_cert_date' => '2026' )),
-        array( 'title' => 'Docker Dev', 'meta' => array( '_cert_name' => 'Docker for Developers', '_cert_org' => 'LinkedIn Learning', '_cert_status' => 'obtained', '_cert_date' => '2024' )),
-    );
+    return array();
 }
 
 /**
- * Demo timeline events (CPT hdgavi_timeline)
+ * Demo timeline events (CPT hdgavi_timeline) — from the CV
  */
 function hdgavi_get_demo_timeline() {
-    return array(
-        array( 'title' => 'TL DevOps', 'meta' => array( '_tl_title_en' => 'DevOps Engineering Apprentice', '_tl_title_fr' => 'Apprenti Ingénieur DevOps', '_tl_period' => '2024 – Present', '_tl_type' => 'work', '_tl_desc_en' => 'Dassault Systèmes — 3DEXPERIENCE containerization on Kubernetes', '_tl_desc_fr' => 'Dassault Systèmes — Conteneurisation 3DEXPERIENCE sur Kubernetes', '_tl_icon' => '⚙️' )),
-        array( 'title' => 'TL Master', 'meta' => array( '_tl_title_en' => "Master's Cybersecurity & Cloud", '_tl_title_fr' => 'Mastère Cybersécurité & Cloud', '_tl_period' => '2024 – 2026', '_tl_type' => 'education', '_tl_desc_en' => 'IPSSI Paris — Cloud security, K8s security, DevOps', '_tl_desc_fr' => 'IPSSI Paris — Sécurité cloud, Kubernetes security, DevOps', '_tl_icon' => '🎓' )),
-        array( 'title' => 'TL WordPress', 'meta' => array( '_tl_title_en' => 'WordPress Developer', '_tl_title_fr' => 'Développeur WordPress', '_tl_period' => '2024', '_tl_type' => 'work', '_tl_desc_en' => 'ACOMP Association — Custom themes and plugins', '_tl_desc_fr' => 'ACOMP Association — Thèmes et plugins personnalisés', '_tl_icon' => '💻' )),
-        array( 'title' => 'TL TSSR', 'meta' => array( '_tl_title_en' => 'Systems & Networks Technician', '_tl_title_fr' => 'Technicien Systèmes & Réseaux', '_tl_period' => '2024', '_tl_type' => 'education', '_tl_desc_en' => 'Ressources Formation — IT career pivot', '_tl_desc_fr' => 'Ressources Formation — Début reconversion informatique', '_tl_icon' => '🎓' )),
-        array( 'title' => 'TL IT Support', 'meta' => array( '_tl_title_en' => 'IT Support Technician', '_tl_title_fr' => 'Technicien Support Informatique', '_tl_period' => '2023', '_tl_type' => 'work', '_tl_desc_en' => 'Lutèce Télécom — Network equipment, Windows/Linux servers', '_tl_desc_fr' => 'Lutèce Télécom — Équipements réseaux, serveurs Windows/Linux', '_tl_icon' => '🖥️' )),
-        array( 'title' => 'TL Surveyor', 'meta' => array( '_tl_title_en' => 'Surveyor – Networks & Infrastructure', '_tl_title_fr' => 'Géomètre – Réseaux & Infrastructures', '_tl_period' => '2018 – 2022', '_tl_type' => 'work', '_tl_desc_en' => 'GRDF then SPAC — Topographic surveys and georeferencing', '_tl_desc_fr' => 'GRDF puis SPAC — Relevés topographiques et géoréférencement', '_tl_icon' => '📐' )),
-        array( 'title' => 'TL BTS', 'meta' => array( '_tl_title_en' => 'BTS Surveyor Topographer', '_tl_title_fr' => 'BTS Géomètre Topographe', '_tl_period' => '2018 – 2020', '_tl_type' => 'education', '_tl_desc_en' => 'EBTP — Apprenticeship at GRDF', '_tl_desc_fr' => 'EBTP — En alternance chez GRDF', '_tl_icon' => '🎓' )),
-        array( 'title' => 'TL Psychology', 'meta' => array( '_tl_title_en' => "Master 1 in Psychology", '_tl_title_fr' => 'Master 1 en Psychologie', '_tl_period' => '2016 – 2018', '_tl_type' => 'education', '_tl_desc_en' => 'University of Lille — Occupational psychology', '_tl_desc_fr' => 'Université de Lille — Psychologie du travail', '_tl_icon' => '🧠' )),
-    );
+    return hdgavi_cv_timeline();
 }
 
 /**
- * Demo skills (CPT hdgavi_skill)
+ * Demo skills (CPT hdgavi_skill) — the seven categories of the CV
  */
 function hdgavi_get_demo_skills() {
-    $skills = array();
-    $categories = array(
-        array( 'en' => 'Containerization', 'fr' => 'Conteneurisation', 'es' => 'Contenedorización', 'techs' => array(
-            array( 'name' => 'Docker', 'level' => 'expert', 'usage' => 'daily', 'years' => '2' ),
-            array( 'name' => 'Kubernetes', 'level' => 'expert', 'usage' => 'daily', 'years' => '2' ),
-            array( 'name' => 'Helm Charts', 'level' => 'advanced', 'usage' => 'daily', 'years' => '1' ),
-            array( 'name' => 'Podman', 'level' => 'intermediate', 'usage' => 'occasional', 'years' => '1' ),
-        )),
-        array( 'en' => 'CI/CD & Automation', 'fr' => 'CI/CD & Automatisation', 'es' => 'CI/CD y automatización', 'techs' => array(
-            array( 'name' => 'GitLab CI', 'level' => 'advanced', 'usage' => 'regular', 'years' => '2' ),
-            array( 'name' => 'Jenkins', 'level' => 'intermediate', 'usage' => 'occasional', 'years' => '1' ),
-            array( 'name' => 'Bash', 'level' => 'expert', 'usage' => 'daily', 'years' => '3' ),
-            array( 'name' => 'Python', 'level' => 'advanced', 'usage' => 'daily', 'years' => '2' ),
-            array( 'name' => 'Ansible', 'level' => 'intermediate', 'usage' => 'occasional', 'years' => '1' ),
-            array( 'name' => 'Terraform', 'level' => 'advanced', 'usage' => 'regular', 'years' => '1' ),
-        )),
-        array( 'en' => 'Cloud & Infrastructure', 'fr' => 'Cloud & Infrastructure', 'es' => 'Cloud e infraestructura', 'techs' => array(
-            array( 'name' => 'AWS', 'level' => 'advanced', 'usage' => 'regular', 'years' => '1' ),
-            array( 'name' => 'Azure', 'level' => 'intermediate', 'usage' => 'occasional', 'years' => '1' ),
-            array( 'name' => 'Linux', 'level' => 'expert', 'usage' => 'daily', 'years' => '3' ),
-            array( 'name' => 'Nginx', 'level' => 'advanced', 'usage' => 'regular', 'years' => '2' ),
-        )),
-        array( 'en' => 'Development', 'fr' => 'Développement', 'es' => 'Desarrollo', 'techs' => array(
-            array( 'name' => 'Java', 'level' => 'advanced', 'usage' => 'regular', 'years' => '2' ),
-            array( 'name' => 'Spring Boot', 'level' => 'intermediate', 'usage' => 'occasional', 'years' => '1' ),
-            array( 'name' => 'React JS', 'level' => 'intermediate', 'usage' => 'occasional', 'years' => '1' ),
-            array( 'name' => 'Go', 'level' => 'learning', 'usage' => 'learning', 'years' => '0' ),
-        )),
-    );
-
-    foreach ( $categories as $cat ) {
-        foreach ( $cat['techs'] as $tech ) {
-            $skills[] = array(
-                'title' => $tech['name'],
-                'meta'  => array(
-                    '_skill_category_en' => $cat['en'], '_skill_category_fr' => $cat['fr'], '_skill_category_es' => $cat['es'],
-                    '_skill_name' => $tech['name'], '_skill_level' => $tech['level'],
-                    '_skill_usage' => $tech['usage'], '_skill_years' => $tech['years'],
-                ),
-            );
-        }
-    }
-    return $skills;
+    return hdgavi_cv_skills();
 }
 
 /**
- * Generic CPT importer (reused for all types)
+ * Generic CPT importer (reused for all types).
+ * With $force: matching posts (by title) are overwritten — theme meta absent from the dataset is
+ * deleted — and demo posts (_hdgavi_demo = 1) that are no longer in the dataset go to the trash.
+ * Posts created by hand (without the demo flag) are never trashed.
  */
 function hdgavi_import_demo_cpt( $post_type, $items, $option_key, $force = false ) {
     if ( ! $force && get_option( $option_key ) ) {
         return array( 'created' => 0, 'skipped' => 'already imported' );
     }
 
-    $created = 0;
+    $created  = 0;
+    $updated  = 0;
+    $keep_ids = array();
     foreach ( $items as $index => $item ) {
         $exists = get_posts( array(
             'post_type'      => $post_type,
@@ -1683,18 +1340,17 @@ function hdgavi_import_demo_cpt( $post_type, $items, $option_key, $force = false
             'fields'         => 'ids',
         ) );
         if ( ! empty( $exists ) ) {
+            $post_id    = $exists[0];
+            $keep_ids[] = $post_id;
             if ( ! $force ) continue;
-            $post_id = $exists[0];
+            if ( 'trash' === get_post_status( $post_id ) ) wp_untrash_post( $post_id );
             wp_update_post( array(
                 'ID'          => $post_id,
                 'post_status' => 'publish',
                 'menu_order'  => $index + 1,
             ) );
-            foreach ( $item['meta'] as $key => $val ) {
-                update_post_meta( $post_id, $key, $val );
-            }
-            update_post_meta( $post_id, '_hdgavi_demo', '1' );
-            $created++;
+            hdgavi_demo_replace_meta( $post_id, $item['meta'] );
+            $updated++;
             continue;
         }
 
@@ -1706,7 +1362,8 @@ function hdgavi_import_demo_cpt( $post_type, $items, $option_key, $force = false
             'post_author' => get_current_user_id() ?: 1,
         ) );
 
-        if ( is_wp_error( $post_id ) ) continue;
+        if ( is_wp_error( $post_id ) || ! $post_id ) continue;
+        $keep_ids[] = $post_id;
 
         update_post_meta( $post_id, '_hdgavi_demo', '1' );
         foreach ( $item['meta'] as $key => $val ) {
@@ -1716,155 +1373,59 @@ function hdgavi_import_demo_cpt( $post_type, $items, $option_key, $force = false
         $created++;
     }
 
+    $trashed = $force ? hdgavi_demo_trash_obsolete( $post_type, $keep_ids ) : 0;
+
     update_option( $option_key, true, false );
-    return array( 'created' => $created );
+    return array( 'created' => $created, 'updated' => $updated, 'trashed' => $trashed );
 }
 
 /**
- * Demo projects (CPT hdgavi_project) with gallery screenshots
+ * Overwrite the theme meta of a post with a dataset item; theme meta not in the item is deleted.
+ */
+function hdgavi_demo_replace_meta( $post_id, $meta ) {
+    $prefixes = array( '_exp_', '_proj_', '_edu_', '_cert_', '_tl_', '_skill_' );
+    foreach ( array_keys( get_post_meta( $post_id ) ) as $key ) {
+        foreach ( $prefixes as $prefix ) {
+            if ( 0 === strpos( $key, $prefix ) && ! array_key_exists( $key, $meta ) ) {
+                delete_post_meta( $post_id, $key );
+                break;
+            }
+        }
+    }
+    foreach ( $meta as $key => $val ) {
+        update_post_meta( $post_id, $key, $val );
+    }
+    update_post_meta( $post_id, '_hdgavi_demo', '1' );
+}
+
+/**
+ * Trash the demo posts of a type that are not in $keep_ids. Returns how many were trashed.
+ */
+function hdgavi_demo_trash_obsolete( $post_type, $keep_ids ) {
+    $obsolete = get_posts( array(
+        'post_type'      => $post_type,
+        'post_status'    => array( 'publish', 'draft', 'private' ),
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'meta_key'       => '_hdgavi_demo',
+        'meta_value'     => '1',
+        'post__not_in'   => $keep_ids ? $keep_ids : array( 0 ),
+    ) );
+    foreach ( $obsolete as $id ) {
+        wp_trash_post( $id );
+    }
+    return count( $obsolete );
+}
+
+/**
+ * Demo projects (CPT hdgavi_project) — the four projects of the CV
  */
 function hdgavi_get_demo_projects() {
-    $placeholder = 'https://placehold.co/800x500/%s/%s?text=%s';
-    return array(
-        array(
-            'title' => '3DEXPERIENCE Platform',
-            'meta'  => array(
-                '_proj_tag'        => 'pro',
-                '_proj_title_en'   => '3DEXPERIENCE Platform – Containerized Deployment',
-                '_proj_title_fr'   => 'Plateforme 3DEXPERIENCE – Déploiement conteneurisé',
-                '_proj_title_es'   => 'Plataforma 3DEXPERIENCE – Despliegue contenedorizado',
-                '_proj_desc_en'    => 'Industrialized deployment of the 3DEXPERIENCE platform using Docker, Kubernetes and Helm at Dassault Systèmes.',
-                '_proj_desc_fr'    => 'Industrialisation du déploiement de la plateforme 3DEXPERIENCE via Docker, Kubernetes et Helm chez Dassault Systèmes.',
-                '_proj_desc_es'    => 'Industrialización del despliegue de la plataforma 3DEXPERIENCE usando Docker, Kubernetes y Helm en Dassault Systèmes.',
-                '_proj_techs'      => 'Docker, Kubernetes, Helm, Bash, Python, CI/CD',
-                '_proj_is_case_study' => '1',
-                '_proj_problem_en' => 'Manual deployment took 4+ hours per environment with frequent configuration drift.',
-                '_proj_problem_fr' => 'Le déploiement manuel prenait plus de 4h par environnement avec des dérives de configuration fréquentes.',
-                '_proj_solution_en' => 'Containerized all services, created Helm charts with value overrides per environment, automated CI/CD pipeline.',
-                '_proj_solution_fr' => 'Conteneurisation de tous les services, création de charts Helm avec overrides par environnement, pipeline CI/CD automatisé.',
-                '_proj_result_en'  => 'Deployment time reduced from 4h to 15min. Zero configuration drift. 99.9% uptime.',
-                '_proj_result_fr'  => 'Temps de déploiement réduit de 4h à 15min. Zéro dérive de configuration. 99.9% uptime.',
-                '_proj_metrics'    => 'Deploy time:4h→15min, Uptime:99.2%→99.9%, Envs:3→12',
-                '_proj_gallery'    => sprintf( $placeholder, '1a1a2e', '06B6D4', 'K8s+Dashboard' ) . "\n"
-                                    . sprintf( $placeholder, '0d1117', '58a6ff', 'Helm+Charts' ) . "\n"
-                                    . sprintf( $placeholder, '1c1c2e', '22C55E', 'CI/CD+Pipeline' ),
-            ),
-        ),
-        array(
-            'title' => 'ODT Runner',
-            'meta'  => array(
-                '_proj_tag'        => 'pro',
-                '_proj_title_en'   => 'ODT Runner – Containerized Test Orchestrator',
-                '_proj_title_fr'   => 'ODT Runner – Orchestrateur de tests conteneurisés',
-                '_proj_title_es'   => 'ODT Runner – Orquestador de pruebas contenedorizadas',
-                '_proj_desc_en'    => 'Automated containerized test orchestrator for 3DEXPERIENCE platform validation. Reduced workflow from 9 to 3 steps.',
-                '_proj_desc_fr'    => "Orchestrateur de tests automatisés conteneurisés pour la validation 3DEXPERIENCE. Réduction du workflow de 9 à 3 étapes.",
-                '_proj_desc_es'    => 'Orquestador de pruebas contenedorizadas para la validación de 3DEXPERIENCE. Reducción del flujo de 9 a 3 pasos.',
-                '_proj_techs'      => 'Docker, Java, YAML, Chrome Headless, Bash',
-                '_proj_gallery'    => sprintf( $placeholder, '0f172a', '818CF8', 'Test+Runner' ) . "\n"
-                                    . sprintf( $placeholder, '1e293b', 'f59e0b', 'Test+Results' ),
-            ),
-        ),
-        array(
-            'title' => 'AWS 3-tier Architecture',
-            'meta'  => array(
-                '_proj_tag'        => 'academic',
-                '_proj_title_en'   => 'AWS 3-tier High Availability Architecture',
-                '_proj_title_fr'   => 'Architecture AWS 3-tiers haute disponibilité',
-                '_proj_title_es'   => 'Arquitectura AWS 3-tiers de alta disponibilidad',
-                '_proj_desc_en'    => 'Deployed a highly available 3-tier cloud architecture on AWS with Terraform.',
-                '_proj_desc_fr'    => "Déploiement d'une architecture cloud 3-tiers hautement disponible sur AWS avec Terraform.",
-                '_proj_desc_es'    => 'Despliegue de una arquitectura cloud 3-tiers de alta disponibilidad en AWS con Terraform.',
-                '_proj_techs'      => 'AWS, Terraform, VPC, ALB, ASG',
-                '_proj_gallery'    => sprintf( $placeholder, '232f3e', 'ff9900', 'AWS+Diagram' ) . "\n"
-                                    . sprintf( $placeholder, '131a22', '06B6D4', 'Terraform+Plan' ) . "\n"
-                                    . sprintf( $placeholder, '1a1a2e', '22C55E', 'CloudWatch' ) . "\n"
-                                    . sprintf( $placeholder, '0d1117', 'f59e0b', 'Cost+Explorer' ),
-            ),
-        ),
-        array(
-            'title' => 'Linux Hardening',
-            'meta'  => array(
-                '_proj_tag'        => 'academic',
-                '_proj_title_en'   => 'Linux Infrastructure Hardening',
-                '_proj_title_fr'   => 'Hardening Infrastructure Linux',
-                '_proj_title_es'   => 'Endurecimiento de infraestructura Linux',
-                '_proj_desc_en'    => 'PKI, SSH multi-factor authentication, Fail2ban intrusion prevention and ModSecurity WAF.',
-                '_proj_desc_fr'    => 'PKI, authentification SSH multi-facteurs, prévention d\'intrusion Fail2ban et pare-feu applicatif ModSecurity.',
-                '_proj_desc_es'    => 'PKI, autenticación SSH multifactor, prevención de intrusiones Fail2ban y WAF ModSecurity.',
-                '_proj_techs'      => 'Linux, PKI, SSH MFA, Fail2ban, ModSecurity',
-                '_proj_gallery'    => sprintf( $placeholder, '1a1a2e', 'ef4444', 'Fail2ban+Logs' ) . "\n"
-                                    . sprintf( $placeholder, '0d1117', '22C55E', 'PKI+Setup' ),
-            ),
-        ),
-        array(
-            'title' => 'HD GAVI Portfolio',
-            'meta'  => array(
-                '_proj_tag'        => 'personal',
-                '_proj_title_en'   => 'HD GAVI Portfolio – Custom WordPress Theme',
-                '_proj_title_fr'   => 'HD GAVI Portfolio – Thème WordPress custom',
-                '_proj_title_es'   => 'HD GAVI Portfolio – Tema WordPress personalizado',
-                '_proj_desc_en'    => 'Full-featured portfolio theme with 8 CPTs, trilingual support, AI chatbot, CV download gate, and analytics dashboard.',
-                '_proj_desc_fr'    => 'Thème portfolio complet avec 8 CPTs, support trilingue, chatbot IA, gate de téléchargement CV et dashboard analytics.',
-                '_proj_desc_es'    => 'Tema portfolio completo con 8 CPTs, soporte trilingüe, chatbot IA, descarga de CV y dashboard analytics.',
-                '_proj_techs'      => 'WordPress, PHP, JavaScript, CSS, REST API',
-                '_proj_link'       => 'https://github.com/g-holali-david/hdgavi-portfolio',
-                '_proj_gallery'    => sprintf( $placeholder, '0B0F1A', '06B6D4', 'Portfolio+Home' ) . "\n"
-                                    . sprintf( $placeholder, '1a1a2e', '818CF8', 'Projects+Page' ) . "\n"
-                                    . sprintf( $placeholder, '0d1117', '22C55E', 'Admin+Dashboard' ),
-            ),
-        ),
-    );
+    return hdgavi_cv_projects();
 }
 
 function hdgavi_import_demo_projects( $force = false ) {
-    if ( ! $force && get_option( 'hdgavi_demo_projects_imported' ) ) {
-        return array( 'created' => 0, 'skipped' => 'already imported' );
-    }
-
-    $projects = hdgavi_get_demo_projects();
-    $created  = 0;
-
-    foreach ( $projects as $index => $project ) {
-        $exists = get_posts( array( 'post_type' => 'hdgavi_project', 'title' => $project['title'], 'post_status' => array( 'publish', 'draft', 'private', 'trash' ), 'posts_per_page' => 1, 'fields' => 'ids' ) );
-        if ( ! empty( $exists ) ) {
-            if ( ! $force ) continue;
-            $post_id = $exists[0];
-            wp_update_post( array( 'ID' => $post_id, 'post_status' => 'publish', 'menu_order' => $index + 1 ) );
-            foreach ( $project['meta'] as $key => $val ) {
-                if ( in_array( $key, array( '_proj_link' ), true ) ) {
-                    update_post_meta( $post_id, $key, esc_url_raw( $val ) );
-                } else {
-                    update_post_meta( $post_id, $key, sanitize_textarea_field( $val ) );
-                }
-            }
-            continue;
-        }
-
-        $post_id = wp_insert_post( array(
-            'post_title'  => $project['title'],
-            'post_status' => 'publish',
-            'post_type'   => 'hdgavi_project',
-            'menu_order'  => $index + 1,
-            'post_author' => get_current_user_id() ?: 1,
-        ) );
-
-        if ( is_wp_error( $post_id ) ) continue;
-
-        update_post_meta( $post_id, '_hdgavi_demo', '1' );
-        foreach ( $project['meta'] as $key => $val ) {
-            if ( in_array( $key, array( '_proj_link' ), true ) ) {
-                update_post_meta( $post_id, $key, esc_url_raw( $val ) );
-            } else {
-                update_post_meta( $post_id, $key, sanitize_textarea_field( $val ) );
-            }
-        }
-
-        $created++;
-    }
-
-    update_option( 'hdgavi_demo_projects_imported', true, false );
-    return array( 'created' => $created );
+    return hdgavi_import_demo_cpt( 'hdgavi_project', hdgavi_get_demo_projects(), 'hdgavi_demo_projects_imported', $force );
 }
 
 /**
@@ -1944,3 +1505,69 @@ function hdgavi_maybe_auto_import_demo() {
     update_option( 'hdgavi_demo_auto_imported', true, false );
 }
 add_action( 'admin_init', 'hdgavi_maybe_auto_import_demo' );
+
+/* ═══════════════════════════════════════
+   SYNC WITH THE NEW CV (one click, from the admin notice)
+   ═══════════════════════════════════════ */
+
+define( 'HDGAVI_CV_CONTENT_VERSION', '2026-10' );
+
+/**
+ * Overwrite the CV content (experience, education, skills, projects, timeline, certifications,
+ * plus the settings listed in hdgavi_cv_sync_keys()) with the data of inc/cv-content.php.
+ */
+function hdgavi_sync_cv_content() {
+    $demo = hdgavi_get_demo_content();
+    foreach ( hdgavi_cv_sync_keys() as $key ) {
+        if ( array_key_exists( $key, $demo ) ) set_theme_mod( $key, $demo[ $key ] );
+    }
+    $report = array(
+        'experience'     => hdgavi_import_demo_cpt( 'hdgavi_experience', hdgavi_get_demo_experiences(), 'hdgavi_demo_experiences_imported', true ),
+        'education'      => hdgavi_import_demo_cpt( 'hdgavi_education', hdgavi_get_demo_educations(), 'hdgavi_demo_educations_imported', true ),
+        'skills'         => hdgavi_import_demo_cpt( 'hdgavi_skill', hdgavi_get_demo_skills(), 'hdgavi_demo_skills_imported', true ),
+        'projects'       => hdgavi_import_demo_projects( true ),
+        'timeline'       => hdgavi_import_demo_cpt( 'hdgavi_timeline', hdgavi_get_demo_timeline(), 'hdgavi_demo_timeline_imported', true ),
+        'certifications' => hdgavi_import_demo_cpt( 'hdgavi_certification', hdgavi_get_demo_certifications(), 'hdgavi_demo_certifications_imported', true ),
+        // The demo "resources" (templates, kits, prices) were invented: imported ones go to the trash.
+        'resources'      => array( 'created' => 0, 'updated' => 0, 'trashed' => hdgavi_demo_trash_obsolete( 'hdgavi_resource', array() ) ),
+    );
+    update_option( 'hdgavi_cv_content_version', HDGAVI_CV_CONTENT_VERSION, false );
+    return $report;
+}
+
+function hdgavi_handle_sync_cv() {
+    if ( ! current_user_can( 'edit_theme_options' ) ) wp_die( 'Permission denied.' );
+    check_admin_referer( 'hdgavi_sync_cv' );
+    $report = hdgavi_sync_cv_content();
+    $parts  = array();
+    foreach ( $report as $type => $r ) {
+        $parts[] = $type . ': ' . intval( $r['created'] ?? 0 ) . ' créé(s), ' . intval( $r['updated'] ?? 0 ) . ' mis à jour, ' . intval( $r['trashed'] ?? 0 ) . ' à la corbeille';
+    }
+    set_transient( 'hdgavi_cv_sync_report', implode( ' · ', $parts ), 120 );
+    wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
+    exit;
+}
+add_action( 'admin_post_hdgavi_sync_cv', 'hdgavi_handle_sync_cv' );
+
+function hdgavi_sync_cv_notice() {
+    if ( ! current_user_can( 'edit_theme_options' ) ) return;
+    $report = get_transient( 'hdgavi_cv_sync_report' );
+    if ( $report ) {
+        delete_transient( 'hdgavi_cv_sync_report' );
+        echo '<div class="notice notice-success is-dismissible"><p><strong>Contenu synchronisé avec le CV.</strong> ' . esc_html( $report ) . '</p></div>';
+        return;
+    }
+    if ( HDGAVI_CV_CONTENT_VERSION === get_option( 'hdgavi_cv_content_version' ) ) return;
+    ?>
+    <div class="notice notice-warning">
+        <p><strong>HD GAVI Portfolio 7 :</strong> le contenu du site (expériences, formations, compétences, projets) peut être aligné sur le CV d’octobre 2026.
+        Les anciennes entrées importées automatiquement qui ne figurent plus sur le CV seront mises à la corbeille ; les contenus créés à la main ne sont pas touchés.</p>
+        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:0 0 10px">
+            <input type="hidden" name="action" value="hdgavi_sync_cv">
+            <?php wp_nonce_field( 'hdgavi_sync_cv' ); ?>
+            <button type="submit" class="button button-primary">Synchroniser avec le CV</button>
+        </form>
+    </div>
+    <?php
+}
+add_action( 'admin_notices', 'hdgavi_sync_cv_notice' );

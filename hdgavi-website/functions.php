@@ -1,11 +1,11 @@
 <?php
 /**
- * HD GAVI Portfolio — functions.php v6.2.1
- * Complete refactor: multi-page, bilingual EN/FR, dark mode default
+ * HD GAVI Portfolio — functions.php v7.0.0
+ * Multi-page CV portfolio, trilingual EN/FR/ES, light and dark modes
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
-define( 'HDGAVI_VERSION', '6.3.0' );
+define( 'HDGAVI_VERSION', '7.0.0' );
 
 /* ── Includes ── */
 require_once get_template_directory() . '/inc/icons.php';
@@ -27,6 +27,8 @@ require_once get_template_directory() . '/inc/qr-code.php';
 require_once get_template_directory() . '/inc/vcard.php';
 require_once get_template_directory() . '/inc/chatbot.php';
 require_once get_template_directory() . '/inc/bilingual.php';
+require_once get_template_directory() . '/inc/cv-content.php';
+require_once get_template_directory() . '/inc/customizer-cv-labels.php';
 require_once get_template_directory() . '/inc/email-templates.php';
 require_once get_template_directory() . '/inc/newsletter.php';
 require_once get_template_directory() . '/inc/rss-importer.php';
@@ -146,16 +148,14 @@ add_action( 'after_setup_theme', 'hdgavi_setup' );
    ═══════════════════════════════════════ */
 
 /**
- * Preconnect + preload critical fonts for performance
+ * Preload the two self-hosted font files used above the fold (IBM Plex Sans 400, IBM Plex Serif 500).
  */
-function hdgavi_preconnect() {
-    echo '<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>' . "\n";
-    echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
-    // Preload critical font files (DM Sans 400 + Outfit 700 — above-fold typography)
-    echo '<link rel="preload" href="https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwA.woff2" as="font" type="font/woff2" crossorigin>' . "\n";
-    echo '<link rel="preload" href="https://fonts.gstatic.com/s/outfit/v11/QGYyz_MVcBeNP4NjuGObqx1XmO1I4TC1C4G-EiAou6Y.woff2" as="font" type="font/woff2" crossorigin>' . "\n";
+function hdgavi_preload_fonts() {
+    $base = get_template_directory_uri() . '/assets/fonts/';
+    echo '<link rel="preload" href="' . esc_url( $base . 'ibm-plex-sans-latin-400-normal.woff2' ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+    echo '<link rel="preload" href="' . esc_url( $base . 'ibm-plex-serif-latin-500-normal.woff2' ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
 }
-add_action( 'wp_head', 'hdgavi_preconnect', 1 );
+add_action( 'wp_head', 'hdgavi_preload_fonts', 1 );
 
 /**
  * Override locale on front-end to match theme default language
@@ -172,12 +172,6 @@ function hdgavi_override_locale( $locale ) {
 add_filter( 'locale', 'hdgavi_override_locale' );
 
 function hdgavi_enqueue() {
-    // Fonts — loaded async via preload/swap (non-blocking)
-    wp_enqueue_style( 'hdgavi-google-fonts',
-        'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap',
-        array(), null
-    );
-
     // Use minified stylesheet if available, fallback to unminified
     $min_style = get_template_directory() . '/style.min.css';
     $style_path = file_exists( $min_style ) ? $min_style : get_template_directory() . '/style.css';
@@ -185,7 +179,7 @@ function hdgavi_enqueue() {
         ? get_template_directory_uri() . '/style.min.css'
         : get_stylesheet_uri();
     $style_ver = filemtime( $style_path );
-    wp_enqueue_style( 'hdgavi-style', $style_uri, array( 'hdgavi-google-fonts' ), $style_ver );
+    wp_enqueue_style( 'hdgavi-style', $style_uri, array(), $style_ver );
 
     // Use minified JS if available
     $min_js = get_template_directory() . '/assets/js/theme.min.js';
@@ -199,27 +193,11 @@ function hdgavi_enqueue() {
     // Localize script with all configurable data
     wp_localize_script( 'hdgavi-theme', 'hdgaviConfig', hdgavi_get_js_config() );
 
-    // Design controls — inject as CSS custom properties
-    hdgavi_design_inline_css();
 }
 add_action( 'wp_enqueue_scripts', 'hdgavi_enqueue' );
 
 /**
- * Inline critical CSS in <head> for fast first paint
- * Critical CSS = reset + variables + navbar + splash + layout + page-transition + animations
- */
-function hdgavi_critical_css() {
-    $critical_path = get_template_directory() . '/assets/css/critical.min.css';
-    if ( ! file_exists( $critical_path ) ) return;
-    echo '<style id="hdgavi-critical">' . "\n";
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS from theme file, not user input
-    echo file_get_contents( $critical_path );
-    echo "\n</style>\n";
-}
-add_action( 'wp_head', 'hdgavi_critical_css', 2 );
-
-/**
- * Add defer to main theme script and async to Google Fonts CSS
+ * Add defer to the main theme script
  */
 function hdgavi_script_attributes( $tag, $handle ) {
     // Defer main theme JS (already in footer, defer ensures non-blocking)
@@ -229,133 +207,6 @@ function hdgavi_script_attributes( $tag, $handle ) {
     return $tag;
 }
 add_filter( 'script_loader_tag', 'hdgavi_script_attributes', 10, 2 );
-
-/**
- * Add media="print" + onload swap for non-critical Google Fonts stylesheet
- * This makes the font CSS non-render-blocking
- */
-function hdgavi_style_attributes( $tag, $handle ) {
-    if ( 'hdgavi-google-fonts' === $handle ) {
-        // Load fonts async: media=print swap to all on load
-        $tag = str_replace(
-            "media='all'",
-            "media='print' onload=\"this.media='all'\"",
-            $tag
-        );
-        // Add noscript fallback
-        $noscript = str_replace( "media='print' onload=\"this.media='all'\"", "media='all'", $tag );
-        $tag .= '<noscript>' . $noscript . '</noscript>';
-    }
-    return $tag;
-}
-add_filter( 'style_loader_tag', 'hdgavi_style_attributes', 10, 2 );
-
-/**
- * Inject design controls (accent colors, border-radius, section padding) as CSS variables
- */
-function hdgavi_design_inline_css() {
-    $accent  = hdgavi_opt( 'design_accent_color', '#06B6D4' );
-    $accent2 = hdgavi_opt( 'design_accent2_color', '#005386' );
-    $radius  = intval( hdgavi_opt( 'design_border_radius', 12 ) );
-    $padding = intval( hdgavi_opt( 'design_section_padding', 100 ) );
-
-    // Validate hex colors to prevent CSS injection
-    if ( ! preg_match( '/^#[0-9a-fA-F]{3,6}$/', $accent ) )  $accent  = '#06B6D4';
-    if ( ! preg_match( '/^#[0-9a-fA-F]{3,6}$/', $accent2 ) ) $accent2 = '#005386';
-
-    // Convert hex to rgba for background tints
-    $accent_rgb  = hdgavi_hex_to_rgb( $accent );
-    $accent2_rgb = hdgavi_hex_to_rgb( $accent2 );
-
-    // Lighten accent for dark mode text readability
-    $accent2_light = hdgavi_lighten_hex( $accent2, 40 );
-
-    $css = ':root{';
-    if ( $accent !== '#06B6D4' ) {
-        $css .= '--accent:' . $accent . ';';
-        $css .= '--accent-hover:' . hdgavi_darken_hex( $accent, 10 ) . ';';
-        $css .= '--accent-bg:rgba(' . $accent_rgb . ',0.1);';
-    }
-    if ( $accent2 !== '#005386' ) {
-        $css .= '--accent2:' . $accent2_light . ';';
-        $css .= '--accent2-bg:rgba(' . $accent2_rgb . ',0.12);';
-    }
-    if ( $radius !== 12 ) {
-        $css .= '--radius:' . $radius . 'px;';
-    }
-    if ( $padding !== 100 ) {
-        $css .= '--section-padding:' . $padding . 'px;';
-    }
-
-    // Avatar size
-    $avatar = intval( hdgavi_opt( 'design_avatar_size', 96 ) );
-    if ( $avatar !== 96 ) {
-        $css .= '--splash-avatar-size:' . $avatar . 'px;';
-    }
-
-    // Navbar height
-    $nav_h = intval( hdgavi_opt( 'design_navbar_height', 72 ) );
-    if ( $nav_h !== 72 ) {
-        $css .= '--nav-height:' . $nav_h . 'px;';
-    }
-
-    $css .= '}';
-
-    // Light mode accent2 override (pure color, no lighten needed)
-    if ( $accent2 !== '#005386' ) {
-        $css .= 'body.light-mode{--accent2:' . $accent2 . ';--accent2-bg:rgba(' . $accent2_rgb . ',0.08);}';
-    }
-
-    // Apply border-radius globally if changed
-    if ( $radius !== 12 ) {
-        $css .= '.skill-card,.project-card,.stat-card,.trait-card,.education-card,.contact-info-item,.repo-card,.selflearn-tag,.splash-terminal,.email-frame,.konami-toast,.form-group input,.form-group textarea,.btn-primary,.btn-ghost,.btn-submit,.btn-cv{border-radius:' . $radius . 'px}';
-    }
-
-    // Dynamic mobile breakpoint for menu
-    $bp = intval( hdgavi_opt( 'design_mobile_breakpoint', 960 ) );
-    if ( $bp !== 960 ) {
-        // Override the default 960px breakpoint with user-configured value
-        $css .= '@media(min-width:' . ( $bp + 1 ) . 'px){.nav-burger,.nav-mobile-close,.nav-mobile-socials,.nav-overlay{display:none !important}.nav-links{position:static;width:auto;height:auto;flex-direction:row;transform:none;padding:0;background:none;border:none;box-shadow:none;gap:4px}}';
-        $css .= '@media(max-width:' . $bp . 'px){.nav-burger{display:flex}.nav-links{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--bg);padding:24px;transform:translateX(100%);transition:transform .4s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;z-index:10001}.nav-links.open{transform:translateX(0)}.nav-mobile-close{display:flex}.nav-mobile-socials{display:flex}.nav-actions .icon-btn,.nav-actions .btn-cv,.rqth-badge{display:none !important}}';
-    }
-
-    if ( $css !== ':root{}' ) {
-        wp_add_inline_style( 'hdgavi-style', $css );
-    }
-}
-
-/**
- * Convert hex to "r,g,b" string for rgba()
- */
-function hdgavi_hex_to_rgb( $hex ) {
-    $hex = ltrim( $hex, '#' );
-    if ( strlen( $hex ) === 3 ) {
-        $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
-    }
-    return intval( substr( $hex, 0, 2 ), 16 ) . ',' . intval( substr( $hex, 2, 2 ), 16 ) . ',' . intval( substr( $hex, 4, 2 ), 16 );
-}
-
-/**
- * Darken a hex color by a percentage
- */
-function hdgavi_darken_hex( $hex, $percent ) {
-    $hex = ltrim( $hex, '#' );
-    $r = max( 0, intval( substr( $hex, 0, 2 ), 16 ) - ( 255 * $percent / 100 ) );
-    $g = max( 0, intval( substr( $hex, 2, 2 ), 16 ) - ( 255 * $percent / 100 ) );
-    $b = max( 0, intval( substr( $hex, 4, 2 ), 16 ) - ( 255 * $percent / 100 ) );
-    return sprintf( '#%02x%02x%02x', $r, $g, $b );
-}
-
-/**
- * Lighten a hex color by a percentage
- */
-function hdgavi_lighten_hex( $hex, $percent ) {
-    $hex = ltrim( $hex, '#' );
-    $r = min( 255, intval( substr( $hex, 0, 2 ), 16 ) + ( 255 * $percent / 100 ) );
-    $g = min( 255, intval( substr( $hex, 2, 2 ), 16 ) + ( 255 * $percent / 100 ) );
-    $b = min( 255, intval( substr( $hex, 4, 2 ), 16 ) + ( 255 * $percent / 100 ) );
-    return sprintf( '#%02x%02x%02x', $r, $g, $b );
-}
 
 /**
  * Build JS config array from Customizer settings
@@ -369,42 +220,21 @@ function hdgavi_get_js_config() {
         'chatbotNonce'     => wp_create_nonce( 'hdgavi_chatbot_nonce' ),
         'swUrl'            => get_template_directory_uri() . '/sw.js',
         'defaultLang'      => hdgavi_opt( 'default_lang', 'en' ),
-        // Effects toggles
-        'particlesEnabled' => (bool) hdgavi_opt( 'fx_particles', true ),
-        'particlesColor'   => hdgavi_opt( 'fx_particles_color', 'rgba(6,182,212,0.3)' ),
-        'particlesSpeed'   => floatval( hdgavi_opt( 'fx_particles_speed', 1 ) ),
-        'particlesDensity' => intval( hdgavi_opt( 'fx_particles_density', 50 ) ),
-        'counterEnabled'   => (bool) hdgavi_opt( 'fx_counter', true ),
-        'progressEnabled'  => (bool) hdgavi_opt( 'fx_progress_bar', true ),
-        'progressColor'    => hdgavi_opt( 'fx_progress_color', '' ),
-        // Terminal splash
-        'terminalEnabled'  => (bool) hdgavi_opt( 'terminal_enabled', true ),
-        'terminalSpeed'    => intval( hdgavi_opt( 'design_terminal_speed', 40 ) ),
-        'terminalLines'    => hdgavi_get_terminal_lines(),
-        // Easter egg
-        'konamiEnabled'    => (bool) hdgavi_opt( 'konami_enabled', true ),
-        'konamiMsgEn'      => hdgavi_opt( 'konami_msg_en', "🎮 You know the Konami code? We're going to get along." ),
-        'konamiMsgFr'      => hdgavi_opt( 'konami_msg_fr', '🎮 Tu connais le Konami code ? On va bien s\'entendre.' ),
-        'konamiMsgEs'      => hdgavi_opt( 'konami_msg_es', '🎮 ¿Conoces el código Konami? Nos vamos a llevar bien.' ),
         // Copy email
         'copyEnabled'      => (bool) hdgavi_opt( 'copy_email_enabled', true ),
-        'copiedTextEn'     => hdgavi_opt( 'copy_feedback_en', 'Copied!' ),
-        'copiedTextFr'     => hdgavi_opt( 'copy_feedback_fr', 'Copié !' ),
-        'copiedTextEs'     => hdgavi_opt( 'copy_feedback_es', '¡Copiado!' ),
+        'copiedTextEn'     => hdgavi_opt( 'copy_feedback_en', 'Copied' ),
+        'copiedTextFr'     => hdgavi_opt( 'copy_feedback_fr', 'Copié' ),
+        'copiedTextEs'     => hdgavi_opt( 'copy_feedback_es', 'Copiado' ),
         // GitHub repos
-        'ghReposEnabled'   => (bool) hdgavi_opt( 'gh_repos_enabled', true ),
+        'ghReposEnabled'   => false,
         'ghUsername'        => hdgavi_opt( 'contact_github_handle', '' ),
         'ghReposLimit'     => intval( hdgavi_opt( 'limit_github_repos', 6 ) ),
-        // Lot 7: Effects
-        'customCursorEnabled' => (bool) hdgavi_opt( 'fx_custom_cursor', false ),
-        'parallaxEnabled'     => (bool) hdgavi_opt( 'fx_parallax', true ),
-        'grainEnabled'        => (bool) hdgavi_opt( 'fx_grain', true ),
         // CV — never expose the raw PDF URL to the frontend
         'cvUrl'            => hdgavi_opt( 'cv_pdf_url', '' ) ? home_url( '?hdgavi_cv=download' ) : '',
         'cvPreviewUrl'     => hdgavi_opt( 'cv_pdf_url', '' ) ? home_url( '?hdgavi_cv=preview' ) : '',
         'cvDownloadNonce'  => wp_create_nonce( 'hdgavi_cv_download_nonce' ),
         // Terminal prompt
-        'termPrompt'       => hdgavi_opt( 'term_page_prompt', 'visitor@hdgavi:~$' ),
+        'termPrompt'       => hdgavi_opt( 'term_page_prompt', '$' ),
         // Terminal page texts (all from Customizer, no hardcoded strings)
         'terminalPageTexts' => array(
             'en' => array(
@@ -474,35 +304,6 @@ function hdgavi_get_js_config() {
     );
 }
 
-/**
- * Get terminal animation lines from Customizer
- */
-function hdgavi_get_terminal_lines() {
-    $default_en = json_encode( array(
-        array( 'cmd' => '$ whoami', 'out' => 'Holali David GAVI — Cloud & DevOps Engineer' ),
-        array( 'cmd' => '$ kubectl get skills', 'out' => 'Docker ✓  Kubernetes ✓  Helm ✓  Java ✓' ),
-        array( 'cmd' => '$ cat motivation.txt', 'out' => 'Curious. Persistent. Passionate about code.' ),
-    ) );
-    $default_fr = json_encode( array(
-        array( 'cmd' => '$ whoami', 'out' => 'Holali David GAVI — Ingénieur Cloud & DevOps' ),
-        array( 'cmd' => '$ kubectl get skills', 'out' => 'Docker ✓  Kubernetes ✓  Helm ✓  Java ✓' ),
-        array( 'cmd' => '$ cat motivation.txt', 'out' => 'Curieux. Persévérant. Passionné par le code.' ),
-    ) );
-    $default_es = json_encode( array(
-        array( 'cmd' => '$ whoami', 'out' => 'Holali David GAVI — Ingeniero Cloud & DevOps' ),
-        array( 'cmd' => '$ kubectl get skills', 'out' => 'Docker ✓  Kubernetes ✓  Helm ✓  Java ✓' ),
-        array( 'cmd' => '$ cat motivación.txt', 'out' => 'Curioso. Persistente. Apasionado por el código.' ),
-    ) );
-    $en = json_decode( hdgavi_opt( 'terminal_lines_en', $default_en ), true );
-    $fr = json_decode( hdgavi_opt( 'terminal_lines_fr', $default_fr ), true );
-    $es = json_decode( hdgavi_opt( 'terminal_lines_es', $default_es ), true );
-    return array(
-        'en' => ! empty( $en ) ? $en : json_decode( $default_en, true ),
-        'fr' => ! empty( $fr ) ? $fr : json_decode( $default_fr, true ),
-        'es' => ! empty( $es ) ? $es : json_decode( $default_es, true ),
-    );
-}
-
 /* ═══════════════════════════════════════
    3. HELPER: get option (filterable)
    ═══════════════════════════════════════ */
@@ -529,7 +330,7 @@ function hdgavi_get_logo_text() {
    5. REGISTER CUSTOM PAGE TEMPLATES
    ═══════════════════════════════════════ */
 function hdgavi_page_templates( $templates ) {
-    $templates['page-templates/splash.php']     = __( 'Splash Page', 'hdgavi-portfolio' );
+    $templates['page-templates/splash.php']     = __( 'Home / Accueil (CV)', 'hdgavi-portfolio' );
     $templates['page-templates/about.php']      = __( 'About / Qui je suis', 'hdgavi-portfolio' );
     $templates['page-templates/skills.php']     = __( 'Skills / Compétences', 'hdgavi-portfolio' );
     $templates['page-templates/experience.php'] = __( 'Experience / Expérience', 'hdgavi-portfolio' );
@@ -593,19 +394,6 @@ function hdgavi_disable_emojis() {
     remove_filter( 'wp_mail', 'wp_staticize_emoji_for_email' );
 }
 add_action( 'init', 'hdgavi_disable_emojis' );
-
-/**
- * Add dns-prefetch for external resources
- */
-function hdgavi_dns_prefetch( $urls, $relation_type ) {
-    if ( 'dns-prefetch' === $relation_type ) {
-        $urls[] = '//fonts.googleapis.com';
-        $urls[] = '//fonts.gstatic.com';
-        $urls[] = '//api.github.com';
-    }
-    return $urls;
-}
-add_filter( 'wp_resource_hints', 'hdgavi_dns_prefetch', 10, 2 );
 
 /* ═══════════════════════════════════════
    8. ADMIN: PAGE SETUP WIZARD

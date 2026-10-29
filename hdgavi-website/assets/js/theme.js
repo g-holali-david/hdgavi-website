@@ -1,14 +1,15 @@
 /**
- * HD GAVI Portfolio — theme.js v6.3.0
- * Multi-page, bilingual EN/FR, dark mode default
+ * HD GAVI Portfolio — theme.js v7.0.0
+ * Multi-page CV portfolio, trilingual EN/FR/ES, light and dark modes
  * FIX JS-1: Version updated to match theme
  */
 (function () {
   'use strict';
 
   var C = window.hdgaviConfig || {};
-  var currentLang = localStorage.getItem('hdgavi_lang') || C.defaultLang || 'en';
-  var currentTheme = localStorage.getItem('hdgavi_theme') || 'dark';
+  // Theme and language were resolved before first paint by the inline script in header.php.
+  var currentLang = ['en', 'fr', 'es'].indexOf(document.documentElement.lang) > -1 ? document.documentElement.lang : (C.defaultLang || 'en');
+  var currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
 
   /** Fetch with AbortController timeout — returns the fetch promise, clears timer in .finally() */
   function fetchTimeout(url, opts, ms) {
@@ -32,16 +33,11 @@
     if (supportedLangs.indexOf(lang) === -1) lang = 'en';
     currentLang = lang;
     document.documentElement.lang = lang;
-    localStorage.setItem('hdgavi_lang', lang);
+    try { localStorage.setItem('hdgavi_lang', lang); } catch (e) {}
 
-    // Update toggle label — show current language
-    document.querySelectorAll('#langLabel, #splashLangLabel').forEach(function (el) {
-      el.textContent = lang.toUpperCase();
-    });
-
-    // Update dropdown active state
-    document.querySelectorAll('.lang-option').forEach(function (opt) {
-      opt.classList.toggle('active', opt.dataset.setLang === lang);
+    // Language switch state
+    document.querySelectorAll('[data-set-lang]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.dataset.setLang === lang ? 'true' : 'false');
     });
 
     // Update UL/OL bullet lists with data-lang
@@ -67,8 +63,6 @@
       opt.textContent = opt.getAttribute('data-lang-text-' + lang);
     });
 
-    // Re-type terminal splash in new language
-    initTerminal(lang);
   }
 
   function toggleLang() {
@@ -82,25 +76,17 @@
      THEME (DARK/LIGHT)
      FIX JS-4: Swap sun↔moon icon on toggle
      ═══════════════════════════════════════ */
-  // SVG icon strings for theme toggle
-  var iconSun = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
-  var iconMoon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
-
   function setTheme(theme) {
-    currentTheme = theme;
-    localStorage.setItem('hdgavi_theme', theme);
-    document.body.classList.toggle('light-mode', theme === 'light');
-    document.documentElement.dataset.theme = theme;
-
-    // FIX JS-4: Update all theme toggle button icons
-    var icon = theme === 'dark' ? iconSun : iconMoon;
-    document.querySelectorAll('#themeToggle, #splashThemeToggle').forEach(function (btn) {
-      btn.innerHTML = icon;
+    currentTheme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', currentTheme === 'dark' ? 'true' : 'false');
     });
   }
 
   function toggleTheme() {
     setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    try { localStorage.setItem('hdgavi_theme_v2', currentTheme); } catch (e) {}
   }
 
   /* ═══════════════════════════════════════
@@ -110,202 +96,24 @@
      FIX JS-6: Close mobile menu on outside click + Escape key
      ═══════════════════════════════════════ */
   function initNav() {
+    var header = document.getElementById('siteHeader');
     var burger = document.getElementById('navBurger');
-    var links = document.getElementById('navLinks');
-    var overlay = document.getElementById('navOverlay');
-    var mobileClose = document.getElementById('navMobileClose');
-    var navbar = document.getElementById('navbar');
-    if (burger && links) {
-      function openMenu() {
-        burger.classList.add('open');
-        links.classList.add('open');
-        if (overlay) overlay.classList.add('open');
-        burger.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
-        // Remove backdrop-filter so position:fixed on nav-links
-        // is relative to the viewport, not the navbar
-        if (navbar) {
-          navbar.style.backdropFilter = 'none';
-          navbar.style.webkitBackdropFilter = 'none';
-        }
-      }
-      function closeMenu() {
-        burger.classList.remove('open');
-        links.classList.remove('open');
-        if (overlay) overlay.classList.remove('open');
-        burger.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-        if (navbar) {
-          navbar.style.backdropFilter = '';
-          navbar.style.webkitBackdropFilter = '';
-        }
-      }
-
-      burger.addEventListener('click', function () {
-        if (links.classList.contains('open')) closeMenu();
-        else openMenu();
-      });
-
-      // Close on link click
-      links.querySelectorAll('a').forEach(function (a) {
-        a.addEventListener('click', closeMenu);
-      });
-
-      // Close on overlay click
-      if (overlay) overlay.addEventListener('click', closeMenu);
-
-      // Close button inside mobile menu
-      if (mobileClose) mobileClose.addEventListener('click', closeMenu);
-
-      // Close on Escape key
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && links.classList.contains('open')) {
-          closeMenu();
-          burger.focus();
-        }
-      });
+    if (!header || !burger) return;
+    function setMenu(open) {
+      header.classList.toggle('is-open', open);
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
-
-    // Active link highlight
-    var currentPath = window.location.pathname.replace(/\/$/, '');
-    document.querySelectorAll('.nav-link').forEach(function (a) {
-      var href = a.getAttribute('href');
-      if (!href) return;
-      var linkPath = href.replace(/\/$/, '');
-      if (currentPath === linkPath || currentPath.endsWith('/' + a.dataset.page)) {
-        a.classList.add('active');
+    burger.addEventListener('click', function () {
+      setMenu(burger.getAttribute('aria-expanded') !== 'true');
+    });
+    header.querySelectorAll('#siteMenu a').forEach(function (a) {
+      a.addEventListener('click', function () { setMenu(false); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') {
+        setMenu(false);
+        burger.focus();
       }
-    });
-
-    // Navbar shrink on scroll (throttled via rAF)
-    var navbar = document.getElementById('navbar');
-    if (navbar) {
-      var navTicking = false;
-      window.addEventListener('scroll', function () {
-        if (!navTicking) {
-          navTicking = true;
-          requestAnimationFrame(function () {
-            navbar.classList.toggle('scrolled', window.scrollY > 20);
-            navTicking = false;
-          });
-        }
-      });
-    }
-  }
-
-  /* ═══════════════════════════════════════
-     PAGE TRANSITION (enter + exit)
-     FIX JS-7: Log URL parse errors instead of silent catch
-     FIX JS-8: Use event delegation instead of per-link listeners
-     FIX JS-9: Only intercept nav links and explicit transition links
-               (not random content links)
-     ═══════════════════════════════════════ */
-  function initPageTransition() {
-    var content = document.getElementById('pageContent');
-    if (!content) return;
-    var navigating = false;
-
-    // Enter transition
-    requestAnimationFrame(function () {
-      content.classList.remove('page-transition-enter');
-      content.classList.add('page-transition-active');
-    });
-
-    // FIX JS-8: Event delegation on document for exit transitions
-    // FIX JS-9: Only intercept links inside nav, footer-links, or with .transition-link class
-    document.addEventListener('click', function (e) {
-      if (navigating) return;
-
-      var link = e.target.closest('a[href]');
-      if (!link) return;
-
-      // Only transition for nav links, footer links, CTA buttons
-      var isTransitionLink = link.closest('.nav-links, .nav-logo, .footer-links, .splash-actions, .btn-primary');
-      if (!isTransitionLink && !link.classList.contains('transition-link')) return;
-
-      var href = link.getAttribute('href');
-      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')
-          || link.target === '_blank' || link.hasAttribute('download')) return;
-
-      // Only intercept same-origin links
-      try {
-        var url = new URL(href, window.location.origin);
-        if (url.origin !== window.location.origin) return;
-      } catch (err) {
-        // FIX JS-7: Log instead of silent fail
-        console.warn('Page transition: invalid URL', href, err);
-        return;
-      }
-
-      e.preventDefault();
-      navigating = true;
-      content.style.transition = 'opacity .3s ease, transform .3s ease';
-      content.style.opacity = '0';
-      content.style.transform = 'translateY(-8px)';
-      setTimeout(function () { window.location.href = href; }, 320);
-    });
-  }
-
-  /* ═══════════════════════════════════════
-     READING PROGRESS BAR
-     FIX JS-10: Throttle scroll updates with rAF
-     ═══════════════════════════════════════ */
-  function initProgressBar() {
-    if (!C.progressEnabled) return;
-    var bar = document.getElementById('readingProgress');
-    if (!bar) return;
-    var color = C.progressColor;
-    if (color) bar.style.background = color;
-
-    var ticking = false;
-    window.addEventListener('scroll', function () {
-      if (!ticking) {
-        requestAnimationFrame(function () {
-          var h = document.documentElement.scrollHeight - window.innerHeight;
-          var pct = h > 0 ? (window.scrollY / h) * 100 : 0;
-          bar.style.width = pct + '%';
-          ticking = false;
-        });
-        ticking = true;
-      }
-    }, { passive: true });
-  }
-
-  /* ═══════════════════════════════════════
-     SCROLL ANIMATIONS (fade-up)
-     ═══════════════════════════════════════ */
-  function initScrollAnimations() {
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-    document.querySelectorAll('.fade-up').forEach(function (el) {
-      observer.observe(el);
-    });
-  }
-
-  /* ═══════════════════════════════════════
-     STAT COUNTER ANIMATION
-     FIX JS-11: Support decimal numbers with parseFloat
-     ═══════════════════════════════════════ */
-  function initCounters() {
-    if (!C.counterEnabled) return;
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          animateCounter(e.target);
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.5 });
-
-    document.querySelectorAll('.stat-number[data-count]').forEach(function (el) {
-      observer.observe(el);
     });
   }
 
@@ -330,181 +138,11 @@
   }
 
   /* ═══════════════════════════════════════
-     PARTICLES CANVAS (Splash)
-     FIX JS-12: Safe color parsing for line opacity
-     FIX JS-13: Raise cap to 200 so density slider is more useful
-     FIX JS-14: devicePixelRatio support for Retina displays
-     ═══════════════════════════════════════ */
-  function initParticles() {
-    if (!C.particlesEnabled) return;
-    // ANIM-7a: Respect user preference for reduced motion
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var canvas = document.getElementById('particlesCanvas');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var density = C.particlesDensity || 50;
-    var speed = C.particlesSpeed || 1;
-    var color = C.particlesColor || 'rgba(6,182,212,0.3)';
-    var particles = [];
-    var animId;
-
-    // FIX JS-12: Parse rgba color into components for safe opacity manipulation
-    var colorBase = 'rgba(6,182,212,';  // fallback
-    var rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    if (rgbaMatch) {
-      colorBase = 'rgba(' + rgbaMatch[1] + ',' + rgbaMatch[2] + ',' + rgbaMatch[3] + ',';
-    }
-
-    function resize() {
-      // FIX JS-14: devicePixelRatio for Retina
-      var dpr = window.devicePixelRatio || 1;
-      var w = canvas.offsetWidth;
-      var h = canvas.offsetHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      initPoints(w, h);
-    }
-
-    function initPoints(w, h) {
-      particles = [];
-      // FIX JS-13: Cap raised to 200, better density scaling
-      var count = Math.floor((w * h) / (12000 / (density / 50)));
-      count = Math.min(count, 200);
-      for (var i = 0; i < count; i++) {
-        particles.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          vx: (Math.random() - 0.5) * speed * 0.5,
-          vy: (Math.random() - 0.5) * speed * 0.5,
-          r: Math.random() * 1.5 + 0.5,
-        });
-      }
-    }
-
-    function draw() {
-      var w = canvas.offsetWidth;
-      var h = canvas.offsetHeight;
-      ctx.clearRect(0, 0, w, h);
-
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > w) p.vx *= -1;
-        if (p.y < 0 || p.y > h) p.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        // Connect nearby particles (squared distance to avoid sqrt per pair)
-        for (var j = i + 1; j < particles.length; j++) {
-          var q = particles[j];
-          var dx = p.x - q.x;
-          var dy = p.y - q.y;
-          var distSq = dx * dx + dy * dy;
-          if (distSq < 14400) { // 120 * 120
-            var dist = Math.sqrt(distSq);
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(q.x, q.y);
-            // FIX JS-12: Use pre-parsed color base for safe opacity
-            ctx.strokeStyle = colorBase + (0.15 * (1 - dist / 120)).toFixed(3) + ')';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-      animId = requestAnimationFrame(draw);
-    }
-
-    resize();
-    draw();
-    window.addEventListener('resize', resize);
-    window.addEventListener('beforeunload', function () { cancelAnimationFrame(animId); });
-  }
-
-  /* ═══════════════════════════════════════
      TERMINAL TYPING ANIMATION (Splash)
      FIX JS-15: Removed unused lineIdx variable
      FIX JS-16: Language is read at init time (acceptable for one-shot animation)
      ═══════════════════════════════════════ */
   var _terminalLang = null;
-  function initTerminal(lang) {
-    if (!C.terminalEnabled) return;
-    var output = document.getElementById('terminalOutput');
-    var cursor = document.getElementById('termCursor');
-    if (!output) return;
-
-    var useLang = lang || currentLang;
-    // Skip if already typed in this language
-    if (_terminalLang === useLang) return;
-    _terminalLang = useLang;
-
-    var lines = (C.terminalLines && C.terminalLines[useLang]) || (C.terminalLines && C.terminalLines.en) || [];
-
-    output.innerHTML = '';
-
-    function typeLine(text, el, delay) {
-      delay = delay || (C.terminalSpeed || 40);
-      return new Promise(function (resolve) {
-        var i = 0;
-        function typeChar() {
-          if (i < text.length) {
-            el.textContent += text[i];
-            i++;
-            setTimeout(typeChar, delay + Math.random() * 20);
-          } else {
-            resolve();
-          }
-        }
-        typeChar();
-      });
-    }
-
-    function runSequence(idx) {
-      if (idx >= lines.length) {
-        if (cursor) cursor.style.display = 'inline-block';
-        return;
-      }
-
-      var line = lines[idx];
-
-      var cmdDiv = document.createElement('div');
-      cmdDiv.className = 'term-line';
-      var cmdSpan = document.createElement('span');
-      cmdSpan.className = 'term-command';
-      cmdDiv.appendChild(cmdSpan);
-      output.appendChild(cmdDiv);
-
-      typeLine(line.cmd, cmdSpan, 35).then(function () {
-        return sleep(300);
-      }).then(function () {
-        if (line.out) {
-          var outDiv = document.createElement('div');
-          outDiv.className = 'term-line term-output';
-          outDiv.textContent = line.out;
-          outDiv.style.opacity = '0';
-          output.appendChild(outDiv);
-          return sleep(100).then(function () {
-            outDiv.style.transition = 'opacity 0.3s';
-            outDiv.style.opacity = '1';
-            return sleep(400);
-          });
-        }
-      }).then(function () {
-        runSequence(idx + 1);
-      });
-    }
-
-    if (cursor) cursor.style.display = 'none';
-    runSequence(0);
-  }
-
   function sleep(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
@@ -531,9 +169,9 @@
         }
 
         function showError() {
-          btn.textContent = '✗';
+          btn.classList.add('copy-error');
           setTimeout(function () {
-            btn.innerHTML = originalHTML;
+            btn.classList.remove('copy-error');
           }, 2000);
         }
 
@@ -600,7 +238,7 @@
           var safeName = escHtml(r.name);
           var safeDesc = r.description ? '<div class="repo-desc">' + escHtml(r.description) + '</div>' : '';
           var langDot = r.language ? '<span><span class="repo-lang-dot" style="background:' + (langColors[r.language] || '#ccc') + '"></span>' + escHtml(r.language) + '</span>' : '';
-          var stars = r.stargazers_count ? '<span>★ ' + r.stargazers_count + '</span>' : '';
+          var stars = '';
 
           return '<a href="' + safeUrl + '" class="repo-card" target="_blank" rel="noopener">'
             + '<div class="repo-name">' + safeName + '</div>'
@@ -623,32 +261,6 @@
   // FIX JS-19: Escape for use in HTML attributes
   function escAttr(str) {
     return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  /* ═══════════════════════════════════════
-     KONAMI CODE EASTER EGG
-     FIX JS-21: Use e.key instead of deprecated e.keyCode
-     ═══════════════════════════════════════ */
-  function initKonami() {
-    if (!C.konamiEnabled) return;
-    var code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-    var idx = 0;
-    document.addEventListener('keydown', function (e) {
-      if (e.key === code[idx]) {
-        idx++;
-        if (idx === code.length) {
-          idx = 0;
-          var toast = document.getElementById('konamiToast');
-          if (toast) {
-            toast.textContent = currentLang === 'fr' ? C.konamiMsgFr : C.konamiMsgEn;
-            toast.classList.add('show');
-            setTimeout(function () { toast.classList.remove('show'); }, 4000);
-          }
-        }
-      } else {
-        idx = 0;
-      }
-    });
   }
 
   /* ═══════════════════════════════════════
@@ -965,10 +577,8 @@
 
         copyFn().then(function () {
           btn.classList.add('copied');
-          btn.textContent = '✓';
           setTimeout(function () {
             btn.classList.remove('copied');
-            btn.textContent = '🔗';
           }, 1500);
         });
       }
@@ -1078,10 +688,10 @@
 
     // Quick action buttons
     var quickActions = [
-      { en: '🛠 Skills', fr: '🛠 Compétences', es: '🛠 Habilidades', q_en: 'What are your main skills?', q_fr: 'Quelles sont tes compétences principales ?', q_es: '¿Cuáles son tus principales habilidades?' },
-      { en: '💼 Experience', fr: '💼 Expérience', es: '💼 Experiencia', q_en: 'Tell me about your work experience', q_fr: 'Parle-moi de ton expérience professionnelle', q_es: 'Cuéntame sobre tu experiencia profesional' },
-      { en: '🚀 Projects', fr: '🚀 Projets', es: '🚀 Proyectos', q_en: 'What projects have you worked on?', q_fr: 'Sur quels projets as-tu travaillé ?', q_es: '¿En qué proyectos has trabajado?' },
-      { en: '📬 Contact', fr: '📬 Contact', es: '📬 Contacto', q_en: 'How can I contact you?', q_fr: 'Comment te contacter ?', q_es: '¿Cómo puedo contactarte?' },
+      { en: 'Skills', fr: 'Compétences', es: 'Habilidades', q_en: 'What are your main skills?', q_fr: 'Quelles sont tes compétences principales ?', q_es: '¿Cuáles son tus principales habilidades?' },
+      { en: 'Experience', fr: 'Expérience', es: 'Experiencia', q_en: 'Tell me about your work experience', q_fr: 'Parle-moi de ton expérience professionnelle', q_es: 'Cuéntame sobre tu experiencia profesional' },
+      { en: 'Projects', fr: 'Projets', es: 'Proyectos', q_en: 'What projects have you worked on?', q_fr: 'Sur quels projets as-tu travaillé ?', q_es: '¿En qué proyectos has trabajado?' },
+      { en: 'Contact', fr: 'Contact', es: 'Contacto', q_en: 'How can I contact you?', q_fr: 'Comment te contacter ?', q_es: '¿Cómo puedo contactarte?' },
     ];
     var quickDiv = document.createElement('div');
     quickDiv.className = 'chatbot-quick-actions';
@@ -1133,88 +743,6 @@
   }
 
   /* ═══════════════════════════════════════
-     CUSTOM CURSOR (dot + ring follower)
-     ═══════════════════════════════════════ */
-  function initCustomCursor() {
-    if (!C.customCursorEnabled) return;
-    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    var dot  = document.getElementById('cursorDot');
-    var ring = document.getElementById('cursorRing');
-    if (!dot || !ring) return;
-
-    var mx = 0, my = 0, rx = 0, ry = 0;
-
-    document.addEventListener('mousemove', function (e) {
-      mx = e.clientX;
-      my = e.clientY;
-      dot.style.left = mx + 'px';
-      dot.style.top  = my + 'px';
-    });
-
-    // Smooth ring follow
-    function followRing() {
-      rx += (mx - rx) * 0.15;
-      ry += (my - ry) * 0.15;
-      ring.style.left = rx + 'px';
-      ring.style.top  = ry + 'px';
-      requestAnimationFrame(followRing);
-    }
-    followRing();
-
-    // Expand ring on hover over interactive elements
-    document.addEventListener('mouseover', function (e) {
-      if (e.target.closest('a, button, input, textarea, [role="button"]')) {
-        ring.classList.add('hover');
-      }
-    });
-    document.addEventListener('mouseout', function (e) {
-      if (e.target.closest('a, button, input, textarea, [role="button"]')) {
-        ring.classList.remove('hover');
-      }
-    });
-
-    // Hide default cursor
-    document.body.style.cursor = 'none';
-    document.querySelectorAll('a, button').forEach(function (el) {
-      el.style.cursor = 'none';
-    });
-  }
-
-  /* ═══════════════════════════════════════
-     PARALLAX SPLASH (subtle depth effect)
-     ═══════════════════════════════════════ */
-  function initParallax() {
-    if (!C.parallaxEnabled) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // Disable parallax on mobile — it pushes the terminal out of view
-    if (window.innerWidth <= 768) return;
-
-    var content = document.querySelector('.splash-content');
-    var terminal = document.querySelector('.splash-terminal');
-    if (!content) return;
-
-    var parTicking = false;
-    window.addEventListener('scroll', function () {
-      if (!parTicking) {
-        parTicking = true;
-        requestAnimationFrame(function () {
-          var y = window.scrollY;
-          if (y <= window.innerHeight) {
-            content.style.transform = 'translateY(' + (y * 0.15) + 'px)';
-            content.style.opacity = Math.max(0, 1 - y / (window.innerHeight * 0.7));
-            if (terminal) {
-              terminal.style.transform = 'translateY(' + (y * 0.08) + 'px)';
-            }
-          }
-          parTicking = false;
-        });
-      }
-    }, { passive: true });
-  }
-
-  /* ═══════════════════════════════════════
      FAVORITES (localStorage bookmarks for veille articles)
      ═══════════════════════════════════════ */
   function initFavorites() {
@@ -1227,7 +755,7 @@
       var id = btn.dataset.fav;
       if (favs.indexOf(id) !== -1) {
         btn.classList.add('favorited');
-        btn.textContent = '★';
+        btn.setAttribute('aria-pressed', 'true');
       }
     });
 
@@ -1240,45 +768,13 @@
       if (idx === -1) {
         favs.push(id);
         btn.classList.add('favorited');
-        btn.textContent = '★';
+        btn.setAttribute('aria-pressed', 'true');
       } else {
         favs.splice(idx, 1);
         btn.classList.remove('favorited');
-        btn.textContent = '☆';
+        btn.setAttribute('aria-pressed', 'false');
       }
       localStorage.setItem('hdgavi_favs', JSON.stringify(favs));
-    });
-  }
-
-  /* ═══════════════════════════════════════
-     GRAIN OVERLAY TOGGLE
-     ═══════════════════════════════════════ */
-  function initGrain() {
-    if (!C.grainEnabled) return;
-    var grain = document.getElementById('grainOverlay');
-    if (grain) grain.style.display = 'block';
-  }
-
-  /* ═══════════════════════════════════════
-     SCROLL TO TOP BUTTON
-     ═══════════════════════════════════════ */
-  function initScrollTop() {
-    var btn = document.getElementById('scrollTop');
-    if (!btn) return;
-    var ticking = false;
-
-    window.addEventListener('scroll', function () {
-      if (!ticking) {
-        requestAnimationFrame(function () {
-          btn.classList.toggle('visible', window.scrollY > 400);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    }, { passive: true });
-
-    btn.addEventListener('click', function () {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
@@ -1292,24 +788,6 @@
           console.warn('SW registration failed:', err);
         });
     }
-  }
-
-  /* ═══════════════════════════════════════
-     STACK BAR ANIMATION
-     Animate skill bars when visible
-     ═══════════════════════════════════════ */
-  function initStackBars() {
-    var bars = document.querySelectorAll('.stack-bar-fill[data-level]');
-    if (!bars.length) return;
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          e.target.style.width = e.target.dataset.level + '%';
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.3 });
-    bars.forEach(function (bar) { observer.observe(bar); });
   }
 
   /* ═══════════════════════════════════════
@@ -1592,7 +1070,7 @@
               var totalStars = repos.reduce(function (sum, r) { return sum + (r.stargazers_count || 0); }, 0);
               var div = document.createElement('div');
               div.className = 'analytics-gh-card';
-              div.innerHTML = '<span class="analytics-number">' + totalStars + '</span><span class="analytics-label">Total Stars ⭐</span>';
+              div.innerHTML = '<span class="analytics-number">' + totalStars + '</span><span class="analytics-label">Total Stars</span>';
               container.appendChild(div);
             });
         })
@@ -1763,30 +1241,10 @@
     setTheme(currentTheme);
     setLang(currentLang);
 
-    // Bind language toggle — dropdown for 3+ languages
-    document.querySelectorAll('#langToggle, #splashLangToggle').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var dropdown = btn.closest('.lang-dropdown');
-        if (dropdown) {
-          dropdown.classList.toggle('open');
-        } else {
-          toggleLang();
-        }
-      });
+    document.querySelectorAll('[data-set-lang]').forEach(function (btn) {
+      btn.addEventListener('click', function () { setLang(btn.dataset.setLang); });
     });
-    // Language dropdown option clicks
-    document.querySelectorAll('.lang-option').forEach(function (opt) {
-      opt.addEventListener('click', function () {
-        setLang(opt.dataset.setLang);
-        document.querySelectorAll('.lang-dropdown').forEach(function (d) { d.classList.remove('open'); });
-      });
-    });
-    // Close dropdown on outside click
-    document.addEventListener('click', function () {
-      document.querySelectorAll('.lang-dropdown').forEach(function (d) { d.classList.remove('open'); });
-    });
-    document.querySelectorAll('#themeToggle, #splashThemeToggle').forEach(function (btn) {
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
       btn.addEventListener('click', toggleTheme);
     });
 
@@ -1797,15 +1255,8 @@
       ['Resources', initResources],
       ['AnalyticsGitHub', initAnalyticsGitHub],
       ['Nav', initNav],
-      ['PageTransition', initPageTransition],
-      ['ProgressBar', initProgressBar],
-      ['ScrollAnimations', initScrollAnimations],
-      ['Counters', initCounters],
-      ['Particles', initParticles],
-      ['Terminal', initTerminal],
       ['CopyEmail', initCopyEmail],
       ['GitHubRepos', initGitHubRepos],
-      ['Konami', initKonami],
       ['TerminalPage', initTerminalPage],
       ['ContactForm', initContactForm],
       ['BookingForm', function () {
@@ -1830,13 +1281,8 @@
       ['WatchSearch', initWatchSearch],
       ['ShareButtons', initShareButtons],
       ['Newsletter', initNewsletter],
-      ['StackBars', initStackBars],
       ['Skeletons', initSkeletons],
-      ['CustomCursor', initCustomCursor],
-      ['Parallax', initParallax],
       ['Favorites', initFavorites],
-      ['Grain', initGrain],
-      ['ScrollTop', initScrollTop],
       ['Chatbot', initChatbot],
       ['ServiceWorker', initServiceWorker],
     ];

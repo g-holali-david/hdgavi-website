@@ -1,6 +1,7 @@
 <?php
 /**
- * HD GAVI Portfolio — SEO: meta tags, JSON-LD, OG, canonical, hreflang (v6.2.0)
+ * HD GAVI Portfolio — SEO: meta tags, JSON-LD, OG, canonical (v7.0.0)
+ * The theme-color meta tags are printed by header.php.
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -74,7 +75,7 @@ function hdgavi_seo_head() {
 	echo '<meta name="twitter:title" content="' . esc_attr( $seo_title ) . '">' . "\n";
 	$twitter_url = hdgavi_opt( 'contact_twitter', '' );
 	if ( ! empty( $twitter_url ) ) {
-		// Extract @handle from URL (e.g. https://x.com/username → @username)
+		// Extract @handle from URL (e.g. https://x.com/username gives @username)
 		$twitter_handle = '@' . basename( rtrim( $twitter_url, '/' ) );
 		echo '<meta name="twitter:site" content="' . esc_attr( $twitter_handle ) . '">' . "\n";
 		echo '<meta name="twitter:creator" content="' . esc_attr( $twitter_handle ) . '">' . "\n";
@@ -89,46 +90,75 @@ function hdgavi_seo_head() {
 add_action( 'wp_head', 'hdgavi_seo_head', 5 );
 
 /**
- * JSON-LD Schema.org — Person on About page & front page
+ * Postal address from the CV location (shared with the vCard in inc/vcard.php).
+ * The CV gives 93300 Aubervilliers, Île-de-France; a location changed in the
+ * Customizer ("Contenu du CV" > Localisation) is used as the locality as is.
+ *
+ * @return array locality, postal_code, region, country_code, country
+ */
+function hdgavi_postal_address() {
+	$location = function_exists( 'hdgavi_cv_location' ) ? (string) hdgavi_cv_location() : (string) hdgavi_opt( 'general_location', '' );
+	$location = trim( $location );
+	$address  = array(
+		'locality'     => 'Aubervilliers',
+		'postal_code'  => '93300',
+		'region'       => 'Île-de-France',
+		'country_code' => 'FR',
+		'country'      => 'France',
+	);
+	if ( '' !== $location && false === stripos( $location, 'Aubervilliers' ) ) {
+		$address['locality']    = $location;
+		$address['postal_code'] = '';
+		$address['region']      = '';
+	}
+	return $address;
+}
+
+/**
+ * JSON-LD Schema.org — Person on About page & front page.
+ * Facts from the CV only: name, job title, employer, address, profiles, site URL
+ * (plus e-mail, phone and photo when they are set in the Customizer). No skill keyword list.
  */
 function hdgavi_jsonld() {
 	if ( ! is_page_template( 'page-templates/about.php' ) && ! is_front_page() ) return;
 
 	$name     = hdgavi_opt( 'general_name', 'Holali David GAVI' );
+	$job      = hdgavi_opt( 'seo_job_title', 'DevOps / Cloud Native Engineer' );
+	$company  = trim( (string) hdgavi_opt( 'seo_company', 'Dassault Systèmes' ) );
+	$linkedin = hdgavi_opt( 'contact_linkedin', 'https://www.linkedin.com/in/holali-david-g-4a434631a/' );
+	$github   = hdgavi_opt( 'contact_github', 'https://github.com/g-holali-david' );
 	$email    = hdgavi_opt( 'general_email', '' );
-	$job      = hdgavi_opt( 'seo_job_title', 'Cloud & DevOps Engineer' );
-	$company  = hdgavi_opt( 'seo_company', '' );
-	$github   = hdgavi_opt( 'contact_github', '' );
-	$linkedin = hdgavi_opt( 'contact_linkedin', '' );
-	$twitter  = hdgavi_opt( 'contact_twitter', '' );
-	$photo    = hdgavi_opt( 'profile_photo', '' );
 	$phone    = hdgavi_opt( 'contact_phone', '' );
-	$location = hdgavi_opt( 'general_location', '' );
-	$skills   = hdgavi_opt( 'seo_knows_about', 'Docker, Kubernetes, CI/CD, Terraform, Cloud Security, DevOps, Linux' );
+	$photo    = hdgavi_opt( 'profile_photo', '' );
+	$addr     = hdgavi_postal_address();
 
 	$schema = array(
-		'@context'  => 'https://schema.org',
-		'@type'     => 'Person',
-		'name'      => $name,
-		'jobTitle'  => $job,
-		'url'       => home_url( '/' ),
+		'@context' => 'https://schema.org',
+		'@type'    => 'Person',
+		'name'     => $name,
+		'jobTitle' => $job,
+		'url'      => home_url( '/' ),
 	);
-	if ( $company ) {
+	if ( '' !== $company ) {
 		$schema['worksFor'] = array(
 			'@type' => 'Organization',
 			'name'  => $company,
 		);
 	}
-	if ( $email )    $schema['email'] = $email;
-	if ( $phone )    $schema['telephone'] = $phone;
-	if ( $photo )    $schema['image'] = $photo;
-	if ( $location ) $schema['address'] = array( '@type' => 'PostalAddress', 'addressLocality' => $location );
-	if ( $skills )   $schema['knowsAbout'] = array_map( 'trim', explode( ',', $skills ) );
+	$address = array(
+		'@type'           => 'PostalAddress',
+		'addressLocality' => $addr['locality'],
+	);
+	if ( '' !== $addr['postal_code'] ) $address['postalCode']    = $addr['postal_code'];
+	if ( '' !== $addr['region'] )      $address['addressRegion'] = $addr['region'];
+	$address['addressCountry'] = $addr['country_code'];
+	$schema['address'] = $address;
 
-	$same_as = array();
-	if ( $github )   $same_as[] = $github;
-	if ( $linkedin ) $same_as[] = $linkedin;
-	if ( $twitter )  $same_as[] = $twitter;
+	if ( $email ) $schema['email']     = $email;
+	if ( $phone ) $schema['telephone'] = $phone;
+	if ( $photo ) $schema['image']     = $photo;
+
+	$same_as = array_values( array_filter( array( $linkedin, $github ) ) );
 	if ( ! empty( $same_as ) ) $schema['sameAs'] = $same_as;
 
 	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";

@@ -1,6 +1,10 @@
 <?php
 /**
  * HD GAVI Portfolio — Customizer: SEO
+ *
+ * 7.0.0: job title and employer defaults follow the CV; the free "knowsAbout" keyword list was
+ * removed (the JSON-LD Person only carries facts from the CV, see inc/seo.php).
+ *
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -9,7 +13,7 @@ function hdgavi_customizer_seo( $wp_customize ) {
     $panel = 'hdgavi_panel';
 
     $wp_customize->add_section( 'hdgavi_seo', array(
-        'title'    => __( '9. SEO & Meta', 'hdgavi-portfolio' ),
+        'title'    => __( 'SEO et métadonnées', 'hdgavi-portfolio' ),
         'panel'    => $panel,
         'priority' => 80,
     ) );
@@ -73,23 +77,21 @@ function hdgavi_customizer_seo( $wp_customize ) {
         'priority'    => 1,
     ) );
 
-    // JSON-LD Person
-    $wp_customize->add_setting( 'seo_job_title', array( 'default' => 'Cloud & DevOps Engineer', 'sanitize_callback' => 'sanitize_text_field' ) );
-    $wp_customize->add_control( 'seo_job_title', array( 'label' => __( 'Job Title (JSON-LD)', 'hdgavi-portfolio' ), 'section' => 'hdgavi_seo' ) );
-    $wp_customize->add_setting( 'seo_company', array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ) );
-    $wp_customize->add_control( 'seo_company', array( 'label' => __( 'Company (JSON-LD) — optional', 'hdgavi-portfolio' ), 'section' => 'hdgavi_seo' ) );
-    $wp_customize->add_setting( 'seo_knows_about', array( 'default' => 'Docker, Kubernetes, CI/CD, Terraform, Cloud Security, DevOps, Linux', 'sanitize_callback' => 'sanitize_text_field' ) );
-    $wp_customize->add_control( 'seo_knows_about', array(
-        'label'       => __( 'Skills / Keywords (JSON-LD knowsAbout)', 'hdgavi-portfolio' ),
-        'description' => __( 'Comma-separated list of skills/technologies for search engines.', 'hdgavi-portfolio' ),
+    // JSON-LD Person (inc/seo.php)
+    $wp_customize->add_setting( 'seo_job_title', array( 'default' => 'DevOps / Cloud Native Engineer', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'seo_job_title', array( 'label' => __( 'Intitulé du poste (JSON-LD jobTitle)', 'hdgavi-portfolio' ), 'section' => 'hdgavi_seo' ) );
+    $wp_customize->add_setting( 'seo_company', array( 'default' => 'Dassault Systèmes', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'seo_company', array(
+        'label'       => __( 'Employeur (JSON-LD worksFor)', 'hdgavi-portfolio' ),
+        'description' => __( 'Vider le champ pour retirer worksFor.', 'hdgavi-portfolio' ),
         'section'     => 'hdgavi_seo',
     ) );
 
-    // Social profiles (for JSON-LD sameAs + Twitter card)
+    // Twitter / X card
     $wp_customize->add_setting( 'contact_twitter', array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
     $wp_customize->add_control( 'contact_twitter', array(
-        'label'       => __( 'Twitter/X Profile URL', 'hdgavi-portfolio' ),
-        'description' => __( 'Full URL (e.g. https://x.com/username). Used in JSON-LD and twitter:site meta.', 'hdgavi-portfolio' ),
+        'label'       => __( 'Profil Twitter / X (facultatif)', 'hdgavi-portfolio' ),
+        'description' => __( 'Adresse complète, par exemple https://x.com/nom. Utilisée pour la balise twitter:site.', 'hdgavi-portfolio' ),
         'section'     => 'hdgavi_seo',
     ) );
 

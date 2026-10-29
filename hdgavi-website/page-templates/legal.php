@@ -1,130 +1,101 @@
 <?php
 /**
  * Template Name: Mentions Légales / Legal
+ * Legal notice and privacy policy, laid out like the CV: label column + text column.
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 get_header();
+
+$email   = hdgavi_opt( 'general_email', '' );
+$updated = hdgavi_opt( 'legal_updated', '' );
+$updated = '' !== $updated
+    ? array( 'en' => $updated, 'fr' => $updated, 'es' => $updated )
+    : array( 'en' => 'October 2026', 'fr' => 'octobre 2026', 'es' => 'octubre de 2026' );
+
+/** One row: label in the meta column, text in the main column ($h: heading level of the label). */
+$row = function ( $label, $html, $h = 'h2' ) {
+    $h = ( 'h3' === $h ) ? 'h3' : 'h2';
+    echo '<div class="entry"><' . $h . ' class="entry-label">' . hdgavi_tri_arr( $label ) . '</' . $h . '><div class="what legal-text">' . $html . '</div></div>'; // phpcs:ignore -- parts escaped by the callers
+};
+$opt_p = function ( $key, $en, $fr, $es ) {
+    return '<p>' . hdgavi_tri_arr( hdgavi_opt_tri( $key, $en, $fr, $es ) ) . '</p>';
+};
 ?>
+<section class="sec wrap sec--first" aria-labelledby="t-legal">
+    <h1 class="sec-title" id="t-legal"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_legal_notice', 'Legal notice', 'Mentions légales', 'Aviso legal' ) ); ?></h1>
+    <div class="sec-body">
+        <?php
+        $publisher = esc_html( hdgavi_opt( 'general_name', 'Holali David GAVI' ) );
+        if ( hdgavi_opt( 'general_location', '' ) ) {
+            $publisher .= '<br>' . esc_html( hdgavi_opt( 'general_location', '' ) );
+        }
+        if ( $email ) {
+            $publisher .= '<br>' . hdgavi_tri_arr( hdgavi_opt_tri( 'label_legal_email', 'E-mail:', 'E-mail :', 'Correo:' ) ) . ' <a href="mailto:' . esc_attr( antispambot( $email ) ) . '">' . esc_html( antispambot( $email ) ) . '</a>';
+        }
+        $row( hdgavi_opt_tri( 'label_legal_publisher', 'Site publisher', 'Éditeur du site', 'Editor del sitio' ), '<p>' . $publisher . '</p>' );
 
-<section class="page-section">
-    <div class="container" style="max-width:800px">
-        <div class="section-header fade-up">
-            <div class="section-label">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_section_en', 'Legal' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_section_fr', 'Juridique' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_section_es', 'Jurídico' ) ); ?></span>
-            </div>
-            <h1 class="section-title">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_title_en', 'Legal Notice & Privacy Policy' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_title_fr', 'Mentions Légales & Politique de Confidentialité' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_title_es', 'Aviso Legal y Política de Privacidad' ) ); ?></span>
-            </h1>
-        </div>
+        $host = trim( hdgavi_opt( 'legal_hosting_name', '' ) . ( hdgavi_opt( 'legal_hosting_address', '' ) ? ', ' . hdgavi_opt( 'legal_hosting_address', '' ) : '' ), ', ' );
+        if ( '' !== $host ) {
+            $row( hdgavi_opt_tri( 'label_legal_hosting', 'Hosting', 'Hébergement', 'Alojamiento' ), '<p>' . esc_html( $host ) . '</p>' );
+        }
 
-        <div class="legal-content about-text fade-up">
-            <!-- Mentions légales -->
-            <h2>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_notice_en', 'Legal Notice' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_notice_fr', 'Mentions Légales' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_notice_es', 'Aviso Legal' ) ); ?></span>
-            </h2>
-
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_publisher_en', 'Site publisher' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_publisher_fr', 'Éditeur du site' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_publisher_es', 'Editor del sitio' ) ); ?></span>
-            </h3>
-            <p>
-                <?php echo esc_html( hdgavi_opt( 'general_name', 'Holali David GAVI' ) ); ?><br>
-                <?php echo esc_html( hdgavi_opt( 'general_location', '' ) ); ?><br>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_email_en', 'Email:' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_email_fr', 'Email :' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_email_es', 'Email:' ) ); ?></span>
-                <?php echo esc_html( hdgavi_opt( 'general_email', '' ) ); ?>
-            </p>
-
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_hosting_en', 'Hosting' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_hosting_fr', 'Hébergement' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_hosting_es', 'Alojamiento' ) ); ?></span>
-            </h3>
-            <p>
-                <?php echo esc_html( hdgavi_opt( 'legal_hosting_name', '' ) ); ?><br>
-                <?php echo esc_html( hdgavi_opt( 'legal_hosting_address', '' ) ); ?>
-            </p>
-
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_ip_heading_en', 'Intellectual property' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_ip_heading_fr', 'Propriété intellectuelle' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_ip_heading_es', 'Propiedad intelectual' ) ); ?></span>
-            </h3>
-            <p>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'legal_ip_en', 'All content on this site (texts, images, code) is the property of the publisher unless otherwise stated. Any reproduction without prior authorization is prohibited.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'legal_ip_fr', 'L\'ensemble du contenu de ce site (textes, images, code) est la propriété de l\'éditeur sauf mention contraire. Toute reproduction sans autorisation préalable est interdite.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'legal_ip_es', 'Todo el contenido de este sitio (textos, imágenes, código) es propiedad del editor salvo mención contraria. Queda prohibida toda reproducción sin autorización previa.' ) ); ?></span>
-            </p>
-
-            <!-- Politique de confidentialité -->
-            <h2 style="margin-top:40px">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_privacy_en', 'Privacy Policy' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_privacy_fr', 'Politique de Confidentialité' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_privacy_es', 'Política de Privacidad' ) ); ?></span>
-            </h2>
-
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_data_en', 'Data collected' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_data_fr', 'Données collectées' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_data_es', 'Datos recopilados' ) ); ?></span>
-            </h3>
-            <p>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'legal_data_en', 'This site may collect the following data through the contact form: name, email address and message content. This data is used solely to respond to your request.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'legal_data_fr', 'Ce site peut collecter les données suivantes via le formulaire de contact : nom, adresse email et contenu du message. Ces données sont utilisées uniquement pour répondre à votre demande.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'legal_data_es', 'Este sitio puede recopilar los siguientes datos a través del formulario de contacto: nombre, dirección de email y contenido del mensaje. Estos datos se utilizan únicamente para responder a su solicitud.' ) ); ?></span>
-            </p>
-
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'legal_cookies_title_en', 'Cookies' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'legal_cookies_title_fr', 'Cookies' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'legal_cookies_title_es', 'Cookies' ) ); ?></span>
-            </h3>
-            <p>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'legal_cookies_en', 'This site uses localStorage for user preferences (language, theme) but does not use tracking cookies. Anonymous visitor statistics may be collected without cookies.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'legal_cookies_fr', 'Ce site utilise le localStorage pour les préférences utilisateur (langue, thème) mais n\'utilise pas de cookies de traçage. Des statistiques anonymes de visite peuvent être collectées sans cookies.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'legal_cookies_es', 'Este sitio utiliza localStorage para las preferencias del usuario (idioma, tema) pero no utiliza cookies de seguimiento. Se pueden recopilar estadísticas anónimas de visitas sin cookies.' ) ); ?></span>
-            </p>
-
-            <?php if ( hdgavi_opt( 'stats_enabled', true ) ) : ?>
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_analytics_en', 'Anonymous analytics' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_analytics_fr', 'Statistiques anonymes' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_analytics_es', 'Estadísticas anónimas' ) ); ?></span>
-            </h3>
-            <p>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'legal_analytics_en', 'Page views are counted using an anonymized hash of your IP address combined with the date. This hash cannot be reversed to identify you. Data is retained for 90 days.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'legal_analytics_fr', 'Les pages vues sont comptées en utilisant un hash anonymisé de votre adresse IP combinée à la date. Ce hash ne peut pas être inversé pour vous identifier. Les données sont conservées 90 jours.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'legal_analytics_es', 'Las páginas vistas se cuentan usando un hash anónimo de su dirección IP combinada con la fecha. Este hash no puede revertirse para identificarle. Los datos se conservan 90 días.' ) ); ?></span>
-            </p>
-            <?php endif; ?>
-
-            <h3>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_rights_en', 'Your rights' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_rights_fr', 'Vos droits' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_rights_es', 'Sus derechos' ) ); ?></span>
-            </h3>
-            <p>
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'legal_rights_en', 'In accordance with the GDPR and the French Data Protection Act, you have the right to access, rectify and delete your personal data. Contact me by email to exercise these rights.' ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'legal_rights_fr', 'Conformément au RGPD et à la loi Informatique et Libertés, vous disposez d\'un droit d\'accès, de rectification et de suppression de vos données personnelles. Contactez-moi par email pour exercer ces droits.' ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'legal_rights_es', 'De conformidad con el RGPD, usted tiene derecho de acceso, rectificación y supresión de sus datos personales. Contácteme por email para ejercer estos derechos.' ) ); ?></span>
-            </p>
-
-            <p style="margin-top:32px;font-size:0.8125rem;color:var(--text-tertiary)">
-                <span data-lang="en"><?php echo esc_html( hdgavi_opt( 'label_legal_updated_en', 'Last updated:' ) ); ?> <?php echo esc_html( hdgavi_opt( 'legal_updated', wp_date( 'F Y' ) ) ); ?></span>
-                <span data-lang="fr"><?php echo esc_html( hdgavi_opt( 'label_legal_updated_fr', 'Dernière mise à jour :' ) ); ?> <?php echo esc_html( hdgavi_opt( 'legal_updated', wp_date( 'F Y' ) ) ); ?></span>
-                <span data-lang="es"><?php echo esc_html( hdgavi_opt( 'label_legal_updated_es', 'Última actualización:' ) ); ?> <?php echo esc_html( hdgavi_opt( 'legal_updated', wp_date( 'F Y' ) ) ); ?></span>
-            </p>
-        </div>
+        $row(
+            hdgavi_opt_tri( 'label_legal_ip_heading', 'Intellectual property', 'Propriété intellectuelle', 'Propiedad intelectual' ),
+            $opt_p( 'legal_ip',
+                'All content on this site (texts, images, code) is the property of the publisher unless otherwise stated. Any reproduction without prior authorisation is prohibited.',
+                'L’ensemble du contenu de ce site (textes, images, code) est la propriété de l’éditeur sauf mention contraire. Toute reproduction sans autorisation préalable est interdite.',
+                'Todo el contenido de este sitio (textos, imágenes, código) es propiedad del editor salvo mención contraria. Queda prohibida toda reproducción sin autorización previa.'
+            )
+        );
+        ?>
     </div>
 </section>
 
+<section class="sec wrap" aria-labelledby="t-privacy">
+    <h2 class="sec-title" id="t-privacy"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_legal_privacy', 'Privacy policy', 'Politique de confidentialité', 'Política de privacidad' ) ); ?></h2>
+    <div class="sec-body">
+        <?php
+        $row(
+            hdgavi_opt_tri( 'label_legal_data', 'Data collected', 'Données collectées', 'Datos recopilados' ),
+            $opt_p( 'legal_data',
+                'The forms of this site only collect what they ask for: name, e-mail address and message (contact form); name, e-mail address, role and reason (CV request); e-mail address (newsletter). This data is only used to answer you or to send the newsletter.',
+                'Les formulaires de ce site ne collectent que ce qu’ils demandent : nom, adresse e-mail et message (formulaire de contact) ; nom, adresse e-mail, fonction et motif (demande de CV) ; adresse e-mail (newsletter). Ces données servent uniquement à vous répondre ou à envoyer la newsletter.',
+                'Los formularios de este sitio solo recogen lo que piden: nombre, correo electrónico y mensaje (formulario de contacto); nombre, correo electrónico, cargo y motivo (solicitud del CV); correo electrónico (boletín). Estos datos solo se utilizan para responderle o para enviar el boletín.'
+            ),
+            'h3'
+        );
+        $row(
+            hdgavi_opt_tri( 'legal_cookies_title', 'Cookies', 'Cookies', 'Cookies' ),
+            $opt_p( 'legal_cookies',
+                'This site stores your preferences (language, theme) in your browser’s localStorage and uses no tracking cookies.',
+                'Ce site enregistre vos préférences (langue, thème) dans le localStorage de votre navigateur et n’utilise aucun cookie de traçage.',
+                'Este sitio guarda sus preferencias (idioma, tema) en el localStorage de su navegador y no utiliza cookies de seguimiento.'
+            ),
+            'h3'
+        );
+        if ( hdgavi_opt( 'stats_enabled', true ) ) {
+            $row(
+                hdgavi_opt_tri( 'label_legal_analytics', 'Anonymous statistics', 'Statistiques anonymes', 'Estadísticas anónimas' ),
+                $opt_p( 'legal_analytics',
+                    'Page views are counted with an anonymised hash of your IP address combined with the date. This hash cannot be reversed to identify you. The data is kept for 90 days.',
+                    'Les pages vues sont comptées à l’aide d’une empreinte anonymisée de votre adresse IP combinée à la date. Cette empreinte ne permet pas de vous identifier. Les données sont conservées 90 jours.',
+                    'Las páginas vistas se cuentan con un hash anónimo de su dirección IP combinada con la fecha. Este hash no permite identificarle. Los datos se conservan 90 días.'
+                ),
+                'h3'
+            );
+        }
+        $row(
+            hdgavi_opt_tri( 'label_legal_rights', 'Your rights', 'Vos droits', 'Sus derechos' ),
+            $opt_p( 'legal_rights',
+                'Under the GDPR and the French Data Protection Act, you can access, correct and delete your personal data. Write to me by e-mail to exercise these rights.',
+                'Conformément au RGPD et à la loi Informatique et Libertés, vous disposez d’un droit d’accès, de rectification et de suppression de vos données personnelles. Écrivez-moi par e-mail pour exercer ces droits.',
+                'De conformidad con el RGPD, usted tiene derecho de acceso, rectificación y supresión de sus datos personales. Escríbame por correo para ejercer estos derechos.'
+            ),
+            'h3'
+        );
+        ?>
+        <p class="sec-main legal-updated"><?php echo hdgavi_tri_arr( hdgavi_opt_tri( 'label_legal_updated', 'Last updated:', 'Dernière mise à jour :', 'Última actualización:' ) ); ?> <?php echo hdgavi_tri_arr( $updated ); ?></p>
+    </div>
+</section>
 <?php get_footer(); ?>

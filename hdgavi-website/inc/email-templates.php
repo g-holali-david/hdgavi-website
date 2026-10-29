@@ -1,167 +1,378 @@
 <?php
 /**
- * HD GAVI Portfolio — Email Templates System
- * 4 templates: Confirmation, Notification, Mini CV, Welcome
- * Integrates with WP Mail SMTP (by WPForms)
+ * HD GAVI Portfolio — E-mail templates
+ * Visitor e-mails (confirmation, first contact, mini CV), admin notifications and the
+ * booking / quote / maintenance form handlers. Works with WP Mail SMTP (by WPForms).
+ *
+ * Layout: tables and inline styles so that Gmail and Outlook render it. A white sheet on
+ * the paper colour of the site, ink text, 1px neutral rules and one steel-blue accent (the
+ * header colour of the printed CV) for links and buttons: 2px radius, no shadow.
+ * Mail clients cannot load the theme fonts, hence the Helvetica / Arial, Georgia and
+ * Consolas / Menlo fallbacks.
  * @package HDGavi_Portfolio
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-/* ═══════════════════════════════════════
-   0. EMAIL COLOR PALETTE (single source of truth)
-   Change colors here — every template inherits them.
-   ═══════════════════════════════════════ */
+/* ---------------------------------------------------------------------------
+   0. PALETTE (single source of truth)
+   Same values as the light theme of the site. The legacy keys stay because
+   inc/newsletter.php and inc/cv-download-gate.php use them ('header_bg' is also
+   the text colour of the buttons they draw on 'accent').
+   --------------------------------------------------------------------------- */
 define( 'HDGAVI_EMAIL_COLORS', array(
-    // Header (dark band)
-    'header_bg'       => '#0B0F1A',
-    'header_text'     => '#F1F5F9',
-    'header_subtitle' => '#94A3B8',
-    // Accent
-    'accent'          => '#06B6D4',
-    'accent_dark'     => '#0891B2',
-    'accent_gradient' => '#005386',
-    // Body (white card)
-    'page_bg'         => '#E8ECF0',
+    'paper'           => '#F8F7F3',
+    'sheet'           => '#FFFFFF',
+    'ink'             => '#1C1C1A',
+    'ink_2'           => '#46453F',
+    'ink_3'           => '#69675F',
+    'rule'            => '#DAD7CF',
+    'accent'          => '#2A5878',
+    'accent_dark'     => '#1E4460',
+    'on_accent'       => '#FFFFFF',
+    // Legacy keys.
+    'header_bg'       => '#FFFFFF',
+    'header_text'     => '#1C1C1A',
+    'header_subtitle' => '#46453F',
+    'accent_gradient' => '#2A5878',
+    'page_bg'         => '#F8F7F3',
     'card_bg'         => '#FFFFFF',
-    'text_heading'    => '#0F172A',
-    'text_body'       => '#334155',
-    'text_secondary'  => '#475569',
-    'text_label'      => '#64748B',
-    'text_muted'      => '#94A3B8',
-    // Surfaces & borders
-    'surface'         => '#F8FAFC',
-    'surface_alt'     => '#F1F5F9',
-    'border'          => '#E2E8F0',
-    // Dark block (newsletter standalone emails)
-    'dark_bg'         => '#0F172A',
+    'text_heading'    => '#1C1C1A',
+    'text_body'       => '#1C1C1A',
+    'text_secondary'  => '#46453F',
+    'text_label'      => '#69675F',
+    'text_muted'      => '#69675F',
+    'surface'         => '#F8F7F3',
+    'surface_alt'     => '#F8F7F3',
+    'border'          => '#DAD7CF',
+    'dark_bg'         => '#1C1C1A',
 ) );
 
 function hdgavi_ec( $key ) {
     return HDGAVI_EMAIL_COLORS[ $key ] ?? '#000000';
 }
 
-/* ═══════════════════════════════════════
-   1. EMAIL HEADER/FOOTER (shared)
-   ═══════════════════════════════════════ */
+/* ---------------------------------------------------------------------------
+   1. BUILDING BLOCKS
+   --------------------------------------------------------------------------- */
+
+/** Font stacks: the theme fonts first, then fonts every mail client has. */
+function hdgavi_email_font( $kind = 'sans' ) {
+    if ( 'serif' === $kind ) {
+        return "'IBM Plex Serif',Georgia,'Times New Roman',serif";
+    }
+    if ( 'mono' === $kind ) {
+        return "'IBM Plex Mono',Consolas,Menlo,'Courier New',monospace";
+    }
+    return "'IBM Plex Sans',Helvetica,Arial,sans-serif";
+}
+
+/** Inline type declaration: family, size, line height and colour. */
+function hdgavi_email_type( $size, $color = 'ink', $kind = 'sans', $line = '1.6' ) {
+    return 'font-family:' . hdgavi_email_font( $kind ) . ';font-size:' . (int) $size . 'px;line-height:' . $line . ';color:' . hdgavi_ec( $color ) . ';';
+}
+
+/** Language of the e-mails: the default language of the site (en, fr or es). */
+function hdgavi_email_lang() {
+    $lang = (string) hdgavi_opt( 'default_lang', 'en' );
+    return in_array( $lang, array( 'en', 'fr', 'es' ), true ) ? $lang : 'en';
+}
+
+/** One value of an array( 'en' => , 'fr' => , 'es' => ), English as fallback. */
+function hdgavi_email_pick( $texts, $lang = '' ) {
+    $lang = $lang ? $lang : hdgavi_email_lang();
+    if ( isset( $texts[ $lang ] ) && '' !== (string) $texts[ $lang ] ) {
+        return (string) $texts[ $lang ];
+    }
+    return isset( $texts['en'] ) ? (string) $texts['en'] : '';
+}
 
 /**
- * Build the shared email header (dark band + gradient bar)
+ * Plain text for titles and subjects: removes pictographs, dingbats, decorative arrows
+ * and emoji modifiers, including in stored Customizer values and in the titles that
+ * other templates pass to hdgavi_email_header().
+ */
+function hdgavi_email_plain( $text ) {
+    $text  = (string) $text;
+    $clean = preg_replace( '/[\x{2190}-\x{21FF}\x{2300}-\x{23FF}\x{2460}-\x{24FF}\x{25A0}-\x{27BF}\x{2900}-\x{297F}\x{2B00}-\x{2BFF}\x{FE00}-\x{FE0F}\x{200D}\x{20E3}\x{1F000}-\x{1FAFF}\x{E0020}-\x{E007F}]/u', '', $text );
+    if ( null === $clean ) {
+        return trim( $text );
+    }
+    return trim( preg_replace( '/ {2,}/', ' ', $clean ) );
+}
+
+/**
+ * Customizer text used by the e-mails. A stored value that equals a default of an earlier
+ * version (emoji, exclamation marks) falls back to the current default.
+ */
+function hdgavi_email_text( $key, $default ) {
+    $legacy = array(
+        'Message well received!', 'Message bien reçu !', "I'll get back to you as soon as possible.", 'Gracias por contactarme',
+        'New message from your portfolio', 'Someone just reached out via the contact form.',
+        'A bit more about me', 'Un peu plus sur moi', 'Un vistazo rápido a mi perfil',
+        "Here's a quick overview of my profile and skills.", 'Voici un aperçu rapide de mon profil et de mes compétences.', 'Un resumen de mi trayectoria',
+        'Welcome! Nice to meet you', 'Bienvenue ! Ravi de vous connaître', 'Bienvenido/a',
+        'Thank you for reaching out for the first time.', "Merci de m'avoir contacté pour la première fois.", 'Gracias por contactarme por primera vez.',
+        'Message received! — Holali David GAVI', 'Message bien reçu ! — Holali David GAVI',
+        'Welcome! — Holali David GAVI', 'Bienvenue ! — Holali David GAVI',
+        'A bit more about me — Holali David GAVI', 'Un peu plus sur moi — Holali David GAVI',
+    );
+    $value = hdgavi_email_plain( hdgavi_opt( $key, $default ) );
+    if ( '' === $value || in_array( $value, $legacy, true ) ) {
+        $value = hdgavi_email_plain( $default );
+    }
+    return $value;
+}
+
+/** Host name of the site, e.g. gholalidavid.com. */
+function hdgavi_email_site_label() {
+    $host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+    $host = preg_replace( '/^www\./i', '', $host );
+    return '' !== $host ? $host : home_url( '/' );
+}
+
+/** Paragraph of body text. $html must already be escaped. */
+function hdgavi_email_p( $html, $style = '' ) {
+    return '<p style="margin:0 0 16px;' . hdgavi_email_type( 15 ) . $style . '">' . $html . '</p>';
+}
+
+/** Text link in the accent colour. */
+function hdgavi_email_link( $url, $label ) {
+    return '<a href="' . esc_url( $url ) . '" style="color:' . hdgavi_ec( 'accent' ) . ';text-decoration:underline;">' . esc_html( $label ) . '</a>';
+}
+
+/** Monospace value (IP address). */
+function hdgavi_email_mono( $text ) {
+    return '<span style="font-family:' . hdgavi_email_font( 'mono' ) . ';font-size:13px;color:' . hdgavi_ec( 'ink_2' ) . ';">' . esc_html( $text ) . '</span>';
+}
+
+/** Filled button (one per e-mail at most): steel blue, 2px radius, no shadow. */
+function hdgavi_email_button( $url, $label ) {
+    return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 24px;"><tr>'
+        . '<td bgcolor="' . hdgavi_ec( 'accent' ) . '" style="background-color:' . hdgavi_ec( 'accent' ) . ';border-radius:2px;padding:11px 20px;">'
+        . '<a href="' . esc_url( $url ) . '" style="' . hdgavi_email_type( 14, 'on_accent', 'sans', '1.2' ) . 'font-weight:600;text-decoration:none;">' . esc_html( $label ) . '</a>'
+        . '</td></tr></table>';
+}
+
+/** Vertical spacing around a block of content. */
+function hdgavi_email_block( $html, $space = 16 ) {
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 ' . (int) $space . 'px;">' . $html . '</td></tr></table>';
+}
+
+/** Section: 1px rule on top, sentence-case heading, content. */
+function hdgavi_email_section( $heading, $html ) {
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+        . '<td style="padding:20px 0 8px;border-top:1px solid ' . hdgavi_ec( 'rule' ) . ';">'
+        . ( '' !== (string) $heading ? '<h2 style="margin:0 0 12px;' . hdgavi_email_type( 15, 'ink', 'sans', '1.4' ) . 'font-weight:600;">' . esc_html( $heading ) . '</h2>' : '' )
+        . $html
+        . '</td></tr></table>';
+}
+
+/** Title line and a grey meta line (organisation, place, dates). $meta_html is escaped. */
+function hdgavi_email_entry( $title, $meta_html = '', $size = 15 ) {
+    return '<p style="margin:0;' . hdgavi_email_type( $size, 'ink', 'sans', '1.45' ) . 'font-weight:600;">' . esc_html( $title ) . '</p>'
+        . ( '' !== $meta_html ? '<p style="margin:2px 0 0;' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.5' ) . '">' . $meta_html . '</p>' : '' );
+}
+
+/** Date or period in monospace, as on the site. */
+function hdgavi_email_when( $text ) {
+    return '<span style="font-family:' . hdgavi_email_font( 'mono' ) . ';font-size:12px;white-space:nowrap;">' . esc_html( $text ) . '</span>';
+}
+
+/** Dash list (French style). Each item is escaped HTML. */
+function hdgavi_email_list( $items ) {
+    $rows = '';
+    foreach ( $items as $item ) {
+        $rows .= '<tr>'
+            . '<td width="16" valign="top" style="width:16px;padding:0 0 6px;' . hdgavi_email_type( 14, 'ink_3', 'sans', '1.55' ) . '">&ndash;</td>'
+            . '<td valign="top" style="padding:0 0 6px;' . hdgavi_email_type( 14, 'ink', 'sans', '1.55' ) . '">' . $item . '</td>'
+            . '</tr>';
+    }
+    return '' === $rows ? '' : '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 0;">' . $rows . '</table>';
+}
+
+/** Label / value rows separated by 1px rules. Each row: array( label, escaped value HTML ). */
+function hdgavi_email_rows( $rows ) {
+    $out = '';
+    foreach ( $rows as $row ) {
+        $out .= '<tr>'
+            . '<td width="104" valign="top" style="width:104px;padding:9px 12px 9px 0;border-top:1px solid ' . hdgavi_ec( 'rule' ) . ';' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.5' ) . '">' . esc_html( $row[0] ) . '</td>'
+            . '<td valign="top" style="padding:9px 0;border-top:1px solid ' . hdgavi_ec( 'rule' ) . ';' . hdgavi_email_type( 14, 'ink', 'sans', '1.5' ) . '">' . $row[1] . '</td>'
+            . '</tr>';
+    }
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;border-bottom:1px solid ' . hdgavi_ec( 'rule' ) . ';">' . $out . '</table>';
+}
+
+/** Message written by the visitor (plain text, line breaks kept). */
+function hdgavi_email_message( $label, $text ) {
+    return '<p style="margin:0 0 6px;' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.5' ) . '">' . esc_html( $label ) . '</p>'
+        . '<p style="margin:0 0 24px;' . hdgavi_email_type( 15 ) . '">' . nl2br( esc_html( $text ) ) . '</p>';
+}
+
+/** Closing formula and name. */
+function hdgavi_email_signoff( $lang = '' ) {
+    $close = array( 'en' => 'Best regards,', 'fr' => 'Cordialement,', 'es' => 'Saludos cordiales,' );
+    return hdgavi_email_p( esc_html( hdgavi_email_pick( $close, $lang ) ) . '<br>' . esc_html( hdgavi_opt( 'general_name', 'Holali David GAVI' ) ), 'margin:24px 0 0;' );
+}
+
+/** Small note under automatic messages. */
+function hdgavi_email_auto_note( $lang = '' ) {
+    $notes = array(
+        'en' => 'This message was sent automatically.',
+        'fr' => 'Ce message a été envoyé automatiquement.',
+        'es' => 'Este mensaje se ha enviado automáticamente.',
+    );
+    return '<p style="margin:24px 0 0;' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.5' ) . '">' . esc_html( hdgavi_email_pick( $notes, $lang ) ) . '</p>';
+}
+
+/** Value of a CV dataset item (inc/cv-content.php): base_<lang>, then base_en, then base. */
+function hdgavi_email_cv_meta( $meta, $base, $lang ) {
+    foreach ( array( $base . '_' . $lang, $base . '_en', $base ) as $key ) {
+        if ( isset( $meta[ $key ] ) && '' !== trim( (string) $meta[ $key ] ) ) {
+            return trim( (string) $meta[ $key ] );
+        }
+    }
+    return '';
+}
+
+/* ---------------------------------------------------------------------------
+   2. HEADER / FOOTER / SKELETON (shared with newsletter.php and cv-download-gate.php)
+   --------------------------------------------------------------------------- */
+
+/**
+ * Shared header: name and role, a 1px rule, then the title of the e-mail.
  */
 function hdgavi_email_header( $title, $subtitle = '' ) {
-    $monogram   = esc_html( hdgavi_opt( 'logo_monogram', 'HD' ) );
-    $logo_text  = esc_html( hdgavi_opt( 'logo_text', 'GAVI' ) );
-    $title      = esc_html( $title );
-    $subtitle   = esc_html( $subtitle );
+    $name     = hdgavi_opt( 'general_name', 'Holali David GAVI' );
+    $role     = function_exists( 'hdgavi_cv' ) ? hdgavi_email_pick( hdgavi_cv( 'role' ) ) : '';
+    $title    = hdgavi_email_plain( $title );
+    $subtitle = hdgavi_email_plain( $subtitle );
 
-    return '
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' . hdgavi_ec('header_bg') . ';padding:32px 36px;">
-      <tr><td>
-        <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
-          <tr>
-            <td style="width:32px;height:32px;background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3);border-radius:6px;text-align:center;vertical-align:middle;font-family:Outfit,Arial,sans-serif;font-size:12px;font-weight:700;color:' . hdgavi_ec('accent') . ';letter-spacing:0.5px;">' . $monogram . '</td>
-            <td style="padding-left:10px;font-family:Outfit,Arial,sans-serif;font-weight:700;font-size:15px;color:' . hdgavi_ec('header_text') . ';">' . $logo_text . '</td>
-          </tr>
-        </table>
-        <div style="font-family:Outfit,Arial,sans-serif;font-size:22px;font-weight:600;color:' . hdgavi_ec('header_text') . ';line-height:1.3;letter-spacing:-0.01em;">' . $title . '</div>
-        ' . ( $subtitle ? '<div style="font-size:14px;color:' . hdgavi_ec('header_subtitle') . ';margin-top:6px;font-family:\'DM Sans\',Arial,sans-serif;">' . $subtitle . '</div>' : '' ) . '
-      </td></tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td style="height:3px;background:linear-gradient(90deg,' . hdgavi_ec('accent') . ',' . hdgavi_ec('accent_gradient') . ');"></td></tr>
-    </table>';
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">'
+        . '<tr><td class="hd-px" style="padding:24px 40px 18px;border-bottom:1px solid ' . hdgavi_ec( 'rule' ) . ';">'
+        . '<p style="margin:0;' . hdgavi_email_type( 15, 'ink', 'sans', '1.4' ) . 'font-weight:600;">' . esc_html( $name ) . '</p>'
+        . ( '' !== $role ? '<p style="margin:0;' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.5' ) . '">' . esc_html( $role ) . '</p>' : '' )
+        . '</td></tr>'
+        . '<tr><td class="hd-px" style="padding:32px 40px 0;">'
+        . '<h1 style="margin:0;' . hdgavi_email_type( 24, 'ink', 'serif', '1.25' ) . 'font-weight:500;">' . esc_html( $title ) . '</h1>'
+        . ( '' !== $subtitle ? '<p style="margin:8px 0 0;' . hdgavi_email_type( 15, 'ink_2', 'sans', '1.5' ) . '">' . esc_html( $subtitle ) . '</p>' : '' )
+        . '</td></tr>'
+        . '</table>';
 }
 
 /**
- * Build the shared email footer
+ * Shared footer for visitor e-mails: contact address and links.
  */
 function hdgavi_email_footer() {
-    $name       = esc_html( hdgavi_opt( 'general_name', 'Holali David GAVI' ) );
-    $badge_en   = esc_html( hdgavi_opt( 'about_badge_en', 'Cloud & DevOps Engineer' ) );
-    $github     = esc_url( hdgavi_opt( 'contact_github', '' ) );
-    $linkedin   = esc_url( hdgavi_opt( 'contact_linkedin', '' ) );
-    $site_url   = esc_url( home_url( '/' ) );
-    $year       = esc_html( hdgavi_opt( 'footer_year', '2026' ) );
+    $email    = sanitize_email( (string) hdgavi_opt( 'general_email', '' ) );
+    $github   = hdgavi_opt( 'contact_github', '' );
+    $linkedin = hdgavi_opt( 'contact_linkedin', '' );
 
-    $social_links = '';
-    if ( $github )   $social_links .= '<a href="' . $github . '" style="color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">GitHub</a>';
-    if ( $github && $linkedin ) $social_links .= ' &middot; ';
-    if ( $linkedin ) $social_links .= '<a href="' . $linkedin . '" style="color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">LinkedIn</a>';
-    if ( $social_links ) $social_links .= ' &middot; ';
-    $social_links .= '<a href="' . $site_url . '" style="color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">Portfolio</a>';
+    $links = array();
+    if ( $email ) {
+        $links[] = hdgavi_email_link( 'mailto:' . $email, $email );
+    }
+    $links[] = hdgavi_email_link( home_url( '/' ), hdgavi_email_site_label() );
+    if ( $github ) {
+        $links[] = hdgavi_email_link( $github, 'GitHub' );
+    }
+    if ( $linkedin ) {
+        $links[] = hdgavi_email_link( $linkedin, 'LinkedIn' );
+    }
 
-    return '
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ' . hdgavi_ec('border') . ';padding:24px 36px;text-align:center;font-family:\'DM Sans\',Arial,sans-serif;font-size:12px;color:' . hdgavi_ec('text_muted') . ';line-height:1.8;">
-      <tr><td>
-        <div>' . $name . '</div>
-        <div style="color:' . hdgavi_ec('accent') . ';font-weight:500;">' . $badge_en . '</div>
-        <div style="margin:8px 0;">' . $social_links . '</div>
-        <div>&copy; ' . $year . ' ' . $name . '</div>
-      </td></tr>
-    </table>';
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">'
+        . '<tr><td class="hd-px" style="padding:20px 40px 26px;border-top:1px solid ' . hdgavi_ec( 'rule' ) . ';' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.7' ) . '">'
+        . implode( ' &middot; ', $links )
+        . '</td></tr></table>';
 }
 
 /**
- * Wrap email content in the full HTML skeleton
+ * Footer of the notifications sent to the site owner.
+ */
+function hdgavi_email_admin_footer( $source ) {
+    $parts = array( esc_html( $source ), esc_html( hdgavi_email_site_label() ) );
+    if ( defined( 'HDGAVI_VERSION' ) ) {
+        $parts[] = esc_html( 'hdgavi-portfolio ' . HDGAVI_VERSION );
+    }
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">'
+        . '<tr><td class="hd-px" style="padding:16px 40px 22px;border-top:1px solid ' . hdgavi_ec( 'rule' ) . ';' . hdgavi_email_type( 12, 'ink_3', 'sans', '1.6' ) . '">'
+        . implode( ' &middot; ', $parts )
+        . '</td></tr></table>';
+}
+
+/**
+ * Wrap the content in the full HTML skeleton (600px column, light colour scheme).
  */
 function hdgavi_email_wrap( $header_html, $body_html, $footer_html ) {
+    $lang = hdgavi_email_lang();
+    $name = hdgavi_opt( 'general_name', 'Holali David GAVI' );
+
     return '<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="' . esc_attr( $lang ) . '" xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Email</title>
-<!--[if mso]><style>table{border-collapse:collapse;}td{font-family:Arial,sans-serif;}</style><![endif]-->
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>' . esc_html( $name ) . '</title>
+<!--[if mso]><style>table{border-collapse:collapse;}td,p,a,h1,h2,span{font-family:Arial,sans-serif !important;}</style><![endif]-->
+<style>
+a[x-apple-data-detectors]{color:inherit !important;text-decoration:none !important;}
+@media only screen and (max-width:520px){.hd-px{padding-left:20px !important;padding-right:20px !important;}.hd-outer{padding:0 !important;}}
+</style>
 </head>
-<body style="margin:0;padding:0;background:' . hdgavi_ec('page_bg') . ';font-family:\'DM Sans\',Arial,Helvetica,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' . hdgavi_ec('page_bg') . ';padding:24px;">
-  <tr><td align="center">
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:' . hdgavi_ec('card_bg') . ';border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+<body style="margin:0;padding:0;background-color:' . hdgavi_ec( 'paper' ) . ';-webkit-text-size-adjust:100%;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' . hdgavi_ec( 'paper' ) . '" style="background-color:' . hdgavi_ec( 'paper' ) . ';">
+  <tr><td class="hd-outer" align="center" style="padding:32px 16px;">
+    <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' . hdgavi_ec( 'sheet' ) . '" style="max-width:600px;background-color:' . hdgavi_ec( 'sheet' ) . ';border:1px solid ' . hdgavi_ec( 'rule' ) . ';">
       <tr><td>' . $header_html . '</td></tr>
-      <tr><td style="padding:32px 36px;font-size:14px;color:' . hdgavi_ec('text_body') . ';line-height:1.7;font-family:\'DM Sans\',Arial,sans-serif;">' . $body_html . '</td></tr>
+      <tr><td class="hd-px" style="padding:24px 40px 32px;' . hdgavi_email_type( 15 ) . '">' . $body_html . '</td></tr>
       <tr><td>' . $footer_html . '</td></tr>
     </table>
+    <!--[if mso]></td></tr></table><![endif]-->
   </td></tr>
 </table>
 </body>
 </html>';
 }
 
-/* ═══════════════════════════════════════
-   2. TEMPLATE BUILDERS
-   ═══════════════════════════════════════ */
+/* ---------------------------------------------------------------------------
+   3. TEMPLATE BUILDERS
+   --------------------------------------------------------------------------- */
 
 /**
  * Template 1: Confirmation (sent to visitor)
  */
 function hdgavi_email_confirmation( $visitor_name ) {
     $lang = hdgavi_opt( 'default_lang', 'en' );
-    $site_url = esc_url( home_url( '/' ) );
+    $name = esc_html( $visitor_name );
+    $site = hdgavi_email_link( home_url( '/' ), hdgavi_email_site_label() );
 
     if ( $lang === 'fr' ) {
-        $title    = hdgavi_opt( 'email_confirm_title_fr', 'Message bien reçu ! ✓' );
-        $subtitle = hdgavi_opt( 'email_confirm_subtitle_fr', 'Je vous réponds dès que possible.' );
-        $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">Bonjour ' . esc_html( $visitor_name ) . ',</p>
-        <p>Merci de m\'avoir contacté via mon portfolio. J\'ai bien reçu votre message et je vous répondrai dans les meilleurs délais — généralement sous 24 à 48 heures.</p>
-        <p>En attendant, n\'hésitez pas à explorer mon parcours et mes réalisations :</p>
-        <p style="margin:16px 0;"><a href="' . $site_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">Voir mon portfolio →</a></p>
-        <p style="font-size:13px;color:' . hdgavi_ec('text_muted') . ';margin-top:12px;">Ceci est une confirmation automatique. Inutile de répondre à cet email.</p>';
+        $title    = hdgavi_email_text( 'email_confirm_title_fr', 'Message reçu' );
+        $subtitle = hdgavi_email_text( 'email_confirm_subtitle_fr', 'Je vous réponds dès que possible.' );
+        $body     = hdgavi_email_p( 'Bonjour ' . $name . ',' )
+            . hdgavi_email_p( esc_html( 'Merci pour votre message, que j’ai bien reçu via le formulaire de contact de mon site.' ) )
+            . hdgavi_email_p( esc_html( 'En attendant ma réponse, vous trouverez mon parcours, mes projets et mon CV sur ' ) . $site . '.' )
+            . hdgavi_email_signoff( 'fr' )
+            . hdgavi_email_auto_note( 'fr' );
     } elseif ( $lang === 'es' ) {
-        $title    = hdgavi_opt( 'email_conf_title_es', 'Mensaje recibido ✓' );
-        $subtitle = hdgavi_opt( 'email_conf_subtitle_es', 'Gracias por contactarme' );
-        $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">Hola ' . esc_html( $visitor_name ) . ',</p>
-        <p>He recibido su mensaje y le responderé lo antes posible — generalmente en 24 a 48 horas.</p>
-        <p>Mientras tanto, no dude en explorar mi trayectoria y mis proyectos:</p>
-        <p style="margin:16px 0;"><a href="' . $site_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">Ver mi portfolio →</a></p>
-        <p style="font-size:13px;color:' . hdgavi_ec('text_muted') . ';margin-top:12px;">Esta es una confirmación automática. No es necesario responder a este email.</p>';
+        $title    = hdgavi_email_text( 'email_conf_title_es', 'Mensaje recibido' );
+        $subtitle = hdgavi_email_text( 'email_conf_subtitle_es', 'Le responderé lo antes posible.' );
+        $body     = hdgavi_email_p( 'Hola ' . $name . ',' )
+            . hdgavi_email_p( esc_html( 'Gracias por su mensaje, que he recibido a través del formulario de contacto de mi sitio.' ) )
+            . hdgavi_email_p( esc_html( 'Mientras tanto, encontrará mi trayectoria, mis proyectos y mi CV en ' ) . $site . '.' )
+            . hdgavi_email_signoff( 'es' )
+            . hdgavi_email_auto_note( 'es' );
     } else {
-        $title    = hdgavi_opt( 'email_confirm_title_en', 'Message well received! ✓' );
-        $subtitle = hdgavi_opt( 'email_confirm_subtitle_en', 'I\'ll get back to you as soon as possible.' );
-        $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">Hi ' . esc_html( $visitor_name ) . ',</p>
-        <p>Thank you for reaching out through my portfolio. I\'ve received your message and I\'ll respond as soon as possible — usually within 24 to 48 hours.</p>
-        <p>In the meantime, feel free to explore my work and background:</p>
-        <p style="margin:16px 0;"><a href="' . $site_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">View my portfolio →</a></p>
-        <p style="font-size:13px;color:' . hdgavi_ec('text_muted') . ';margin-top:12px;">This is an automated confirmation. No need to reply to this email.</p>';
+        $title    = hdgavi_email_text( 'email_confirm_title_en', 'Message received' );
+        $subtitle = hdgavi_email_text( 'email_confirm_subtitle_en', 'I will reply as soon as possible.' );
+        $body     = hdgavi_email_p( 'Hello ' . $name . ',' )
+            . hdgavi_email_p( esc_html( 'Thank you for your message, which I received through the contact form on my site.' ) )
+            . hdgavi_email_p( esc_html( 'In the meantime, my background, projects and CV are on ' ) . $site . '.' )
+            . hdgavi_email_signoff( 'en' )
+            . hdgavi_email_auto_note( 'en' );
     }
 
     $header = hdgavi_email_header( $title, $subtitle );
@@ -173,127 +384,159 @@ function hdgavi_email_confirmation( $visitor_name ) {
  * Template 2: Notification (sent to admin/you)
  */
 function hdgavi_email_notification( $visitor_name, $visitor_email, $message, $ip = '' ) {
-    $title    = hdgavi_opt( 'email_notif_title', '📩 New message from your portfolio' );
-    $subtitle = hdgavi_opt( 'email_notif_subtitle', 'Someone just reached out via the contact form.' );
+    $title    = hdgavi_email_text( 'email_notif_title', 'New message from the contact form' );
+    $subtitle = hdgavi_email_text( 'email_notif_subtitle', 'Sent through the contact form on the site.' );
     $date     = current_time( 'F j, Y' );
     $time     = current_time( 'H:i' );
 
-    $body = '
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' . hdgavi_ec('surface') . ';border:1px solid ' . hdgavi_ec('border') . ';border-radius:8px;margin-bottom:16px;">
-      <tr><td style="padding:20px;">
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:' . hdgavi_ec('text_muted') . ';margin-bottom:4px;">From</div>
-        <div style="font-size:14px;color:' . hdgavi_ec('text_heading') . ';font-weight:500;">' . esc_html( $visitor_name ) . ' — ' . esc_html( $visitor_email ) . '</div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid ' . hdgavi_ec('border') . ';font-size:14px;color:' . hdgavi_ec('text_secondary') . ';line-height:1.7;">' . nl2br( esc_html( $message ) ) . '</div>
-      </td></tr>
-    </table>
-    <p style="margin:16px 0;"><a href="mailto:' . esc_attr( $visitor_email ) . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">Reply directly →</a></p>
-    <p style="font-size:12px;color:' . hdgavi_ec('text_muted') . ';">Sent on ' . esc_html( $date ) . ' at ' . esc_html( $time ) . ( $ip ? ' • IP: ' . esc_html( $ip ) : '' ) . '</p>';
+    $rows = array(
+        array( 'From', '<strong>' . esc_html( $visitor_name ) . '</strong>' ),
+        array( 'E-mail', hdgavi_email_link( 'mailto:' . $visitor_email, $visitor_email ) ),
+        array( 'Date', esc_html( $date . ', ' . $time ) ),
+    );
+    if ( $ip ) {
+        $rows[] = array( 'IP', hdgavi_email_mono( $ip ) );
+    }
+
+    $body = hdgavi_email_rows( $rows )
+        . hdgavi_email_message( 'Message', $message )
+        . hdgavi_email_button( 'mailto:' . $visitor_email, 'Reply to ' . $visitor_name );
 
     $header = hdgavi_email_header( $title, $subtitle );
     // Simplified footer for admin notification
-    $footer = '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ' . hdgavi_ec('border') . ';padding:16px 36px;text-align:center;font-size:11px;color:' . hdgavi_ec('text_muted') . ';font-family:\'DM Sans\',Arial,sans-serif;">
-      <tr><td>Portfolio notification system — hdgavi-portfolio v' . HDGAVI_VERSION . '</td></tr>
-    </table>';
+    $footer = hdgavi_email_admin_footer( 'Contact form' );
 
     return hdgavi_email_wrap( $header, $body, $footer );
 }
 
 /**
  * Template 3: Auto-response with mini CV (sent to visitor)
+ * Content comes from the CV datasets of inc/cv-content.php (the new CV, verbatim).
  */
 function hdgavi_email_minicv( $visitor_name ) {
-    $lang     = hdgavi_opt( 'default_lang', 'en' );
-    $name     = esc_html( hdgavi_opt( 'general_name', 'Holali David GAVI' ) );
+    $lang   = hdgavi_opt( 'default_lang', 'en' );
+    $l      = in_array( $lang, array( 'fr', 'es' ), true ) ? $lang : 'en';
+    $name   = esc_html( $visitor_name );
+    $cv_url = hdgavi_opt( 'cv_pdf_url', '' );
+    $email  = sanitize_email( (string) hdgavi_opt( 'general_email', '' ) );
+    $colon  = ( 'fr' === $l ) ? '&nbsp;: ' : ': ';
+
     if ( $lang === 'fr' ) {
-        $badge = hdgavi_opt( 'about_badge_fr', '' );
+        $title    = hdgavi_email_text( 'email_cv_title_fr', 'Résumé de mon CV' );
+        $subtitle = hdgavi_email_text( 'email_cv_subtitle_fr', 'Expérience, projets, compétences et formation' );
+        $greeting = 'Bonjour ' . $name . ',';
+        $intro    = esc_html( 'Merci pour votre message. Voici un résumé de mon CV' ) . ( $cv_url ? '&nbsp;; ' . esc_html( 'la version complète est disponible en PDF.' ) : '.' );
+        $outro    = $email ? esc_html( 'Pour toute question, vous pouvez m’écrire à ' ) . hdgavi_email_link( 'mailto:' . $email, $email ) . '.' : '';
     } elseif ( $lang === 'es' ) {
-        $badge = hdgavi_opt( 'about_badge_es', hdgavi_opt( 'about_badge_en', '' ) );
+        $title    = hdgavi_email_text( 'email_cv_title_es', 'Resumen de mi CV' );
+        $subtitle = hdgavi_email_text( 'email_cv_subtitle_es', 'Experiencia, proyectos, competencias y formación' );
+        $greeting = 'Hola ' . $name . ',';
+        $intro    = esc_html( 'Gracias por su mensaje. Este es un resumen de mi CV' ) . ( $cv_url ? esc_html( '; la versión completa está disponible en PDF.' ) : '.' );
+        $outro    = $email ? esc_html( 'Si tiene alguna pregunta, puede escribirme a ' ) . hdgavi_email_link( 'mailto:' . $email, $email ) . '.' : '';
     } else {
-        $badge = hdgavi_opt( 'about_badge_en', '' );
-    }
-    $site_url = esc_url( home_url( '/' ) );
-    $github   = esc_url( hdgavi_opt( 'contact_github', '' ) );
-    $linkedin = esc_url( hdgavi_opt( 'contact_linkedin', '' ) );
-    $cv_url   = esc_url( hdgavi_opt( 'cv_pdf_url', '' ) );
-
-    // Build skills pills from CPT
-    $skills_html = '';
-    $email_skills = hdgavi_get_cpt_posts( 'hdgavi_skill' );
-    foreach ( array_slice( $email_skills, 0, 8 ) as $es ) {
-        $esn = get_post_meta( $es->ID, '_skill_name', true );
-        if ( $esn ) {
-            $skills_html .= '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;background:rgba(6,182,212,0.08);color:' . hdgavi_ec('accent_dark') . ';border:1px solid rgba(6,182,212,0.15);margin:2px 3px 2px 0;">' . esc_html( $esn ) . '</span>';
-        }
+        $title    = hdgavi_email_text( 'email_cv_title_en', 'Summary of my CV' );
+        $subtitle = hdgavi_email_text( 'email_cv_subtitle_en', 'Experience, projects, skills and education' );
+        $greeting = 'Hello ' . $name . ',';
+        $intro    = esc_html( 'Thank you for your message. Here is a summary of my CV' ) . ( $cv_url ? esc_html( '; the full version is available as a PDF.' ) : '.' );
+        $outro    = $email ? esc_html( 'If you have any questions, you can write to me at ' ) . hdgavi_email_link( 'mailto:' . $email, $email ) . '.' : '';
     }
 
-    // Stats
-    $stats_html = '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0;"><tr>';
-    for ( $i = 1; $i <= 4; $i++ ) {
-        $num   = esc_html( hdgavi_opt( "stat_{$i}_number", '' ) );
-        if ( $lang === 'fr' ) {
-            $label = hdgavi_opt( "stat_{$i}_label_fr", '' );
-        } elseif ( $lang === 'es' ) {
-            $label = hdgavi_opt( "stat_{$i}_label_es", hdgavi_opt( "stat_{$i}_label_en", '' ) );
+    $labels = array(
+        'profile'  => array( 'en' => 'Profile', 'fr' => 'Synthèse', 'es' => 'Perfil' ),
+        'previous' => array( 'en' => 'Previous experience', 'fr' => 'Expériences précédentes', 'es' => 'Experiencia anterior' ),
+        'projects' => array( 'en' => 'Technical projects', 'fr' => 'Projets techniques', 'es' => 'Proyectos técnicos' ),
+    );
+
+    // Profile: the synthesis of the CV.
+    $profile = hdgavi_email_p( esc_html( hdgavi_email_pick( hdgavi_cv( 'lead' ), $l ) ), 'font-size:14px;' )
+        . hdgavi_email_p( esc_html( hdgavi_email_pick( hdgavi_cv( 'goal' ), $l ) ), 'font-size:14px;margin:0 0 12px;' );
+
+    // Experience: current role in full, previous roles on one line each.
+    $exps     = function_exists( 'hdgavi_cv_experiences' ) ? hdgavi_cv_experiences() : array();
+    $current  = null;
+    $previous = array();
+    foreach ( $exps as $exp ) {
+        $meta = isset( $exp['meta'] ) ? (array) $exp['meta'] : array();
+        if ( null === $current && ! empty( $meta['_exp_featured'] ) ) {
+            $current = $meta;
         } else {
-            $label = hdgavi_opt( "stat_{$i}_label_en", '' );
-        }
-        if ( $num ) {
-            $stats_html .= '<td style="width:25%;text-align:center;padding:12px;background:' . hdgavi_ec('surface') . ';border:1px solid ' . hdgavi_ec('border') . ';border-radius:8px;">
-              <div style="font-family:Outfit,Arial,sans-serif;font-size:20px;font-weight:700;color:' . hdgavi_ec('accent') . ';">' . $num . '</div>
-              <div style="font-size:11px;color:' . hdgavi_ec('text_muted') . ';margin-top:2px;">' . esc_html( $label ) . '</div>
-            </td>';
-            if ( $i < 4 ) $stats_html .= '<td style="width:4%"></td>';
+            $previous[] = $meta;
         }
     }
-    $stats_html .= '</tr></table>';
-
-    // Links row
-    $links_html = '<table cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;padding-top:12px;border-top:1px solid ' . hdgavi_ec('border') . ';"><tr>';
-    $links_html .= '<td style="padding-right:16px;"><a href="' . $site_url . '" style="font-size:13px;color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">🌐 Portfolio</a></td>';
-    if ( $github )   $links_html .= '<td style="padding-right:16px;"><a href="' . $github . '" style="font-size:13px;color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">💻 GitHub</a></td>';
-    if ( $linkedin ) $links_html .= '<td style="padding-right:16px;"><a href="' . $linkedin . '" style="font-size:13px;color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">💼 LinkedIn</a></td>';
-    if ( $lang === 'fr' ) {
-        $cv_label = 'Télécharger CV';
-    } elseif ( $lang === 'es' ) {
-        $cv_label = 'Descargar CV';
-    } else {
-        $cv_label = 'Download CV';
-    }
-    if ( $cv_url )   $links_html .= '<td><a href="' . $cv_url . '" style="font-size:13px;color:' . hdgavi_ec('accent') . ';text-decoration:none;font-weight:500;">📄 ' . $cv_label . '</a></td>';
-    $links_html .= '</tr></table>';
-
-    if ( $lang === 'fr' ) {
-        $title    = hdgavi_opt( 'email_cv_title_fr', 'Un peu plus sur moi' );
-        $subtitle = hdgavi_opt( 'email_cv_subtitle_fr', 'Voici un aperçu rapide de mon profil et de mes compétences.' );
-        $greeting = 'Bonjour ' . esc_html( $visitor_name ) . ',';
-        $intro    = 'Merci pour votre intérêt. Voici un résumé de mon profil :';
-        $outro    = 'N\'hésitez pas à répondre à cet email ou à planifier un échange. Je suis toujours ouvert aux discussions et opportunités.';
-    } elseif ( $lang === 'es' ) {
-        $title    = hdgavi_opt( 'email_cv_title_es', 'Un vistazo rápido a mi perfil' );
-        $subtitle = hdgavi_opt( 'email_cv_subtitle_es', 'Un resumen de mi trayectoria' );
-        $greeting = 'Hola ' . esc_html( $visitor_name ) . ',';
-        $intro    = 'Gracias por su interés. Aquí tiene un resumen rápido de mi perfil:';
-        $outro    = 'No dude en responder a este email o programar una llamada. Siempre estoy abierto a discutir oportunidades y colaboraciones.';
-    } else {
-        $title    = hdgavi_opt( 'email_cv_title_en', 'A bit more about me' );
-        $subtitle = hdgavi_opt( 'email_cv_subtitle_en', 'Here\'s a quick overview of my profile and skills.' );
-        $greeting = 'Hi ' . esc_html( $visitor_name ) . ',';
-        $intro    = 'Thank you for your interest. Here\'s a quick snapshot of my profile:';
-        $outro    = 'Feel free to reply to this email or schedule a call. I\'m always happy to discuss opportunities and collaborations.';
+    if ( null === $current && $previous ) {
+        $current = array_shift( $previous );
     }
 
-    $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">' . $greeting . '</p>
-    <p>' . $intro . '</p>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' . hdgavi_ec('surface') . ';border:1px solid ' . hdgavi_ec('border') . ';border-radius:8px;margin:16px 0;">
-      <tr><td style="padding:24px;">
-        <div style="font-family:Outfit,Arial,sans-serif;font-size:17px;font-weight:700;color:' . hdgavi_ec('text_heading') . ';margin-bottom:4px;">' . $name . '</div>
-        <div style="font-size:13px;color:' . hdgavi_ec('accent') . ';font-weight:500;margin-bottom:12px;">' . esc_html( $badge ) . '</div>
-        <div>' . $skills_html . '</div>
-        ' . $links_html . '
-      </td></tr>
-    </table>
-    ' . $stats_html . '
-    <p>' . $outro . '</p>';
+    $role_html = '';
+    if ( $current ) {
+        $where   = implode( ', ', array_filter( array( hdgavi_email_cv_meta( $current, '_exp_company', $l ), hdgavi_email_cv_meta( $current, '_exp_location', $l ) ) ) );
+        $period  = hdgavi_email_cv_meta( $current, '_exp_period', $l );
+        $bullets = array_filter( array_map( 'trim', explode( "\n", hdgavi_email_cv_meta( $current, '_exp_bullets', $l ) ) ) );
+        $role_html = hdgavi_email_entry( hdgavi_email_cv_meta( $current, '_exp_title', $l ), esc_html( $where ) . ( $period ? ' &middot; ' . hdgavi_email_when( $period ) : '' ) )
+            . hdgavi_email_list( array_map( 'esc_html', $bullets ) );
+        $role_html = hdgavi_email_block( $role_html, 8 );
+    }
+
+    $prev_html = '';
+    foreach ( $previous as $meta ) {
+        $where      = implode( ', ', array_filter( array( hdgavi_email_cv_meta( $meta, '_exp_company', $l ), hdgavi_email_cv_meta( $meta, '_exp_location', $l ) ) ) );
+        $period     = hdgavi_email_cv_meta( $meta, '_exp_period', $l );
+        $prev_html .= hdgavi_email_block( hdgavi_email_entry( hdgavi_email_cv_meta( $meta, '_exp_title', $l ), esc_html( $where ) . ( $period ? ' &middot; ' . hdgavi_email_when( $period ) : '' ), 14 ), 12 );
+    }
+
+    // Projects: title, stack, one-line description, repository.
+    $projects  = function_exists( 'hdgavi_cv_projects' ) ? hdgavi_cv_projects() : array();
+    $proj_html = '';
+    foreach ( $projects as $project ) {
+        $meta  = isset( $project['meta'] ) ? (array) $project['meta'] : array();
+        $stack = array_filter( array_map( 'trim', explode( ',', hdgavi_email_cv_meta( $meta, '_proj_techs', $l ) ) ) );
+        $desc  = hdgavi_email_cv_meta( $meta, '_proj_desc', $l );
+        $link  = hdgavi_email_cv_meta( $meta, '_proj_link', $l );
+        $html  = '<p style="margin:0;' . hdgavi_email_type( 15, 'ink', 'sans', '1.45' ) . 'font-weight:600;">' . esc_html( hdgavi_email_cv_meta( $meta, '_proj_title', $l ) ) . '</p>'
+            . ( $stack ? '<p style="margin:2px 0 0;' . hdgavi_email_type( 12, 'ink_3', 'mono', '1.5' ) . '">' . implode( ' &middot; ', array_map( 'esc_html', $stack ) ) . '</p>' : '' )
+            . ( $desc ? '<p style="margin:6px 0 0;' . hdgavi_email_type( 14, 'ink', 'sans', '1.55' ) . '">' . esc_html( $desc ) . '</p>' : '' )
+            . ( $link ? '<p style="margin:4px 0 0;' . hdgavi_email_type( 13, 'ink_3', 'sans', '1.5' ) . '">' . hdgavi_email_link( $link, preg_replace( '#^https?://#', '', $link ) ) . '</p>' : '' );
+        $proj_html .= hdgavi_email_block( $html, 18 );
+    }
+
+    // Skills: the categories of the CV.
+    $groups      = function_exists( 'hdgavi_cv_skill_groups' ) ? hdgavi_cv_skill_groups() : array();
+    $skills_html = '';
+    foreach ( $groups as $group ) {
+        $items = isset( $group['items'] ) ? (array) $group['items'] : array();
+        if ( ! $items ) {
+            continue;
+        }
+        $skills_html .= '<p style="margin:0 0 6px;' . hdgavi_email_type( 14, 'ink', 'sans', '1.55' ) . '">'
+            . '<span style="font-weight:600;">' . esc_html( hdgavi_email_pick( $group, $l ) ) . '</span>' . $colon . esc_html( implode( ', ', $items ) )
+            . '</p>';
+    }
+    if ( $skills_html ) {
+        $skills_html = hdgavi_email_block( $skills_html, 8 );
+    }
+
+    // Education.
+    $educations = function_exists( 'hdgavi_cv_educations' ) ? hdgavi_cv_educations() : array();
+    $edu_html   = '';
+    foreach ( $educations as $education ) {
+        $meta      = isset( $education['meta'] ) ? (array) $education['meta'] : array();
+        $period    = hdgavi_email_cv_meta( $meta, '_edu_period', $l );
+        $edu_html .= hdgavi_email_block( hdgavi_email_entry( hdgavi_email_cv_meta( $meta, '_edu_degree', $l ), esc_html( hdgavi_email_cv_meta( $meta, '_edu_school', $l ) ) . ( $period ? ' &middot; ' . hdgavi_email_when( $period ) : '' ), 14 ), 12 );
+    }
+
+    $languages = hdgavi_email_p( esc_html( hdgavi_email_pick( hdgavi_cv( 'fact_languages' ), $l ) ) . '.', 'font-size:14px;margin:0 0 12px;' );
+
+    $body = hdgavi_email_p( $greeting )
+        . hdgavi_email_p( $intro )
+        . ( $cv_url ? hdgavi_email_button( $cv_url, hdgavi_email_pick( hdgavi_cv_label( 'download_cv' ), $l ) ) : '' )
+        . hdgavi_email_section( hdgavi_email_pick( $labels['profile'], $l ), $profile )
+        . ( $role_html ? hdgavi_email_section( hdgavi_email_pick( hdgavi_cv_label( 'current' ), $l ), $role_html ) : '' )
+        . ( $prev_html ? hdgavi_email_section( hdgavi_email_pick( $labels['previous'], $l ), $prev_html ) : '' )
+        . ( $proj_html ? hdgavi_email_section( hdgavi_email_pick( $labels['projects'], $l ), $proj_html ) : '' )
+        . ( $skills_html ? hdgavi_email_section( hdgavi_email_pick( hdgavi_cv_label( 'skills' ), $l ), $skills_html ) : '' )
+        . ( $edu_html ? hdgavi_email_section( hdgavi_email_pick( hdgavi_cv_label( 'education' ), $l ), $edu_html ) : '' )
+        . hdgavi_email_section( hdgavi_email_pick( hdgavi_cv_label( 'languages' ), $l ), $languages )
+        . hdgavi_email_section( '', ( $outro ? hdgavi_email_p( $outro, 'margin:4px 0 0;' ) : '' ) . hdgavi_email_signoff( $l ) );
 
     $header = hdgavi_email_header( $title, $subtitle );
     $footer = hdgavi_email_footer();
@@ -304,59 +547,44 @@ function hdgavi_email_minicv( $visitor_name ) {
  * Template 4: Welcome first contact (sent to visitor)
  */
 function hdgavi_email_welcome( $visitor_name ) {
-    $lang     = hdgavi_opt( 'default_lang', 'en' );
-    $site_url = esc_url( home_url( '/' ) );
-    $quote_en = hdgavi_opt( 'about_quote_en', 'I don\'t look for the easy way — I look to understand.' );
-    $quote_fr = hdgavi_opt( 'about_quote_fr', 'Je ne cherche pas la facilité, je cherche à comprendre.' );
+    $lang   = hdgavi_opt( 'default_lang', 'en' );
+    $l      = in_array( $lang, array( 'fr', 'es' ), true ) ? $lang : 'en';
+    $name   = esc_html( $visitor_name );
+    $lead   = esc_html( hdgavi_email_pick( hdgavi_cv( 'lead' ), $l ) );
+    $goal   = esc_html( hdgavi_email_pick( hdgavi_cv( 'goal' ), $l ) );
+    $site   = hdgavi_email_link( home_url( '/' ), hdgavi_email_site_label() );
+    $cv_url = hdgavi_opt( 'cv_pdf_url', '' );
 
     if ( $lang === 'fr' ) {
-        $title    = hdgavi_opt( 'email_welcome_title_fr', 'Bienvenue ! Ravi de vous connaître 👋' );
-        $subtitle = hdgavi_opt( 'email_welcome_subtitle_fr', 'Merci de m\'avoir contacté pour la première fois.' );
-        $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">Bonjour ' . esc_html( $visitor_name ) . ',</p>
-        <p>Je suis content que vous ayez trouvé mon portfolio ! C\'est le début de ce que j\'espère être un bel échange.</p>
-        <p>Quelques mots sur moi : je suis quelqu\'un de curieux et persévérant. J\'ai appris l\'informatique en autodidacte avant d\'en faire mon métier, et aujourd\'hui je travaille comme <strong>' . esc_html( hdgavi_opt( 'seo_job_title', 'Cloud & DevOps Engineer' ) ) . '</strong>, spécialisé en conteneurisation et orchestration Kubernetes.</p>
-        <p>Voici comment je peux aider :</p>
-        <div style="margin:12px 0 16px;padding-left:16px;border-left:2px solid ' . hdgavi_ec('accent') . ';">
-          <p style="margin:6px 0;font-size:14px;">⚙️ Architecture DevOps & Cloud</p>
-          <p style="margin:6px 0;font-size:14px;">🐳 Conteneurisation & Kubernetes</p>
-          <p style="margin:6px 0;font-size:14px;">🔐 Sécurité des infrastructures</p>
-          <p style="margin:6px 0;font-size:14px;">💻 Développement full-stack</p>
-        </div>
-        <p style="margin:16px 0;"><a href="' . $site_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">Explorer mon portfolio →</a></p>
-        <p>N\'hésitez pas à répondre — je lis chaque message personnellement.</p>
-        <p style="margin-top:20px;font-style:italic;color:' . hdgavi_ec('text_label') . ';font-size:14px;">« ' . esc_html( $quote_fr ) . ' »</p>';
+        $title    = hdgavi_email_text( 'email_welcome_title_fr', 'Quelques mots de présentation' );
+        $subtitle = hdgavi_email_text( 'email_welcome_subtitle_fr', '' );
+        $cv       = $cv_url ? esc_html( ', et mon CV est disponible ' ) . hdgavi_email_link( $cv_url, 'en PDF' ) : '';
+        $body     = hdgavi_email_p( 'Bonjour ' . $name . ',' )
+            . hdgavi_email_p( esc_html( 'Merci pour votre premier message. Voici en quelques lignes qui je suis.' ) )
+            . hdgavi_email_p( $lead )
+            . hdgavi_email_p( esc_html( 'En parallèle, je prépare le Mastère Cybersécurité & Cloud Computing de l’IPSSI (2024 – 2026). ' ) . $goal )
+            . hdgavi_email_p( esc_html( 'Le détail de mon expérience et de mes projets se trouve sur ' ) . $site . $cv . '. ' . esc_html( 'Je réponds à votre message dès que possible.' ) )
+            . hdgavi_email_signoff( 'fr' );
     } elseif ( $lang === 'es' ) {
-        $title    = hdgavi_opt( 'email_welcome_title_es', 'Bienvenido/a 👋' );
-        $subtitle = hdgavi_opt( 'email_welcome_subtitle_es', 'Gracias por contactarme por primera vez.' );
-        $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">Hola ' . esc_html( $visitor_name ) . ',</p>
-        <p>Me alegra que haya encontrado mi portfolio. Es el comienzo de lo que espero sea un gran intercambio.</p>
-        <p>Algunas cosas sobre mí: soy una persona curiosa y persistente. Aprendí informática de forma autodidacta antes de que se convirtiera en mi carrera, y hoy trabajo como <strong>' . esc_html( hdgavi_opt( 'seo_job_title', 'Cloud & DevOps Engineer' ) ) . '</strong>, especializado en contenedorización y orquestación Kubernetes.</p>
-        <p>Cómo puedo ayudar:</p>
-        <div style="margin:12px 0 16px;padding-left:16px;border-left:2px solid ' . hdgavi_ec('accent') . ';">
-          <p style="margin:6px 0;font-size:14px;">⚙️ Arquitectura DevOps & Cloud</p>
-          <p style="margin:6px 0;font-size:14px;">🐳 Contenedorización & Kubernetes</p>
-          <p style="margin:6px 0;font-size:14px;">🔐 Seguridad de infraestructuras</p>
-          <p style="margin:6px 0;font-size:14px;">💻 Desarrollo full-stack</p>
-        </div>
-        <p style="margin:16px 0;"><a href="' . $site_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">Explorar mi portfolio →</a></p>
-        <p>No dude en responder — leo cada mensaje personalmente.</p>
-        <p style="margin-top:20px;font-style:italic;color:' . hdgavi_ec('text_label') . ';font-size:14px;">« ' . esc_html( hdgavi_opt( 'about_quote_es', $quote_en ) ) . ' »</p>';
+        $title    = hdgavi_email_text( 'email_welcome_title_es', 'Una breve presentación' );
+        $subtitle = hdgavi_email_text( 'email_welcome_subtitle_es', '' );
+        $cv       = $cv_url ? esc_html( ', y mi CV está disponible ' ) . hdgavi_email_link( $cv_url, 'en PDF' ) : '';
+        $body     = hdgavi_email_p( 'Hola ' . $name . ',' )
+            . hdgavi_email_p( esc_html( 'Gracias por su primer mensaje. Le presento brevemente mi perfil.' ) )
+            . hdgavi_email_p( $lead )
+            . hdgavi_email_p( esc_html( 'Paralelamente, preparo el Mastère en Ciberseguridad y Cloud Computing de IPSSI (2024 – 2026). ' ) . $goal )
+            . hdgavi_email_p( esc_html( 'El detalle de mi experiencia y de mis proyectos está en ' ) . $site . $cv . '. ' . esc_html( 'Responderé a su mensaje lo antes posible.' ) )
+            . hdgavi_email_signoff( 'es' );
     } else {
-        $title    = hdgavi_opt( 'email_welcome_title_en', 'Welcome! Nice to meet you 👋' );
-        $subtitle = hdgavi_opt( 'email_welcome_subtitle_en', 'Thank you for reaching out for the first time.' );
-        $body = '<p style="font-size:15px;font-weight:600;color:' . hdgavi_ec('text_heading') . ';margin-bottom:16px;">Hi ' . esc_html( $visitor_name ) . ',</p>
-        <p>I\'m glad you found my portfolio! This is the beginning of what I hope will be a great exchange.</p>
-        <p>A few things about me: I\'m a curious and persistent person. I taught myself IT before it became my career, and today I work as a <strong>' . esc_html( hdgavi_opt( 'seo_job_title', 'Cloud & DevOps Engineer' ) ) . '</strong>, specialized in containerization and Kubernetes orchestration.</p>
-        <p>Here\'s what I can help with:</p>
-        <div style="margin:12px 0 16px;padding-left:16px;border-left:2px solid ' . hdgavi_ec('accent') . ';">
-          <p style="margin:6px 0;font-size:14px;">⚙️ DevOps & Cloud architecture</p>
-          <p style="margin:6px 0;font-size:14px;">🐳 Containerization & Kubernetes</p>
-          <p style="margin:6px 0;font-size:14px;">🔐 Infrastructure security</p>
-          <p style="margin:6px 0;font-size:14px;">💻 Full-stack development</p>
-        </div>
-        <p style="margin:16px 0;"><a href="' . $site_url . '" style="display:inline-block;padding:12px 28px;background:' . hdgavi_ec('accent') . ';color:#FFFFFF;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none;">Explore my portfolio →</a></p>
-        <p>Don\'t hesitate to reply — I read every message personally.</p>
-        <p style="margin-top:20px;font-style:italic;color:' . hdgavi_ec('text_label') . ';font-size:14px;">"' . esc_html( $quote_en ) . '"</p>';
+        $title    = hdgavi_email_text( 'email_welcome_title_en', 'A short introduction' );
+        $subtitle = hdgavi_email_text( 'email_welcome_subtitle_en', '' );
+        $cv       = $cv_url ? esc_html( ', and my CV is available ' ) . hdgavi_email_link( $cv_url, 'as a PDF' ) : '';
+        $body     = hdgavi_email_p( 'Hello ' . $name . ',' )
+            . hdgavi_email_p( esc_html( 'Thank you for your first message. Here is a short introduction.' ) )
+            . hdgavi_email_p( $lead )
+            . hdgavi_email_p( esc_html( 'Alongside this work, I am preparing the Mastère in Cybersecurity & Cloud Computing at IPSSI (2024 – 2026). ' ) . $goal )
+            . hdgavi_email_p( esc_html( 'My experience and projects are described on ' ) . $site . $cv . '. ' . esc_html( 'I will reply to your message as soon as possible.' ) )
+            . hdgavi_email_signoff( 'en' );
     }
 
     $header = hdgavi_email_header( $title, $subtitle );
@@ -364,9 +592,65 @@ function hdgavi_email_welcome( $visitor_name ) {
     return hdgavi_email_wrap( $header, $body, $footer );
 }
 
-/* ═══════════════════════════════════════
-   3. CONTACT FORM HANDLER (replaces ajax-contact)
-   ═══════════════════════════════════════ */
+/**
+ * Notification to the owner built from label / value rows (booking, quote, maintenance).
+ */
+function hdgavi_email_admin_message( $title, $subtitle, $rows, $message_label = '', $message = '', $source = '' ) {
+    $body = hdgavi_email_rows( $rows ) . ( '' !== (string) $message ? hdgavi_email_message( $message_label, $message ) : '' );
+    return hdgavi_email_wrap( hdgavi_email_header( $title, $subtitle ), $body, hdgavi_email_admin_footer( $source ) );
+}
+
+/**
+ * Acknowledgement sent to the visitor after the booking form.
+ * @return array( 'subject' => string, 'html' => string )
+ */
+function hdgavi_email_booking_ack( $visitor_name, $date, $time, $site_name ) {
+    $l = hdgavi_email_lang();
+    $t = array(
+        'en' => array( 'title' => 'Meeting request received', 'sub' => 'I will confirm the time slot by e-mail.', 'hello' => 'Hello', 'text' => 'Your meeting request has been received', 'at' => ' at ', 'colon' => ': ' ),
+        'fr' => array( 'title' => 'Demande de rendez-vous reçue', 'sub' => 'Je vous confirmerai le créneau par e-mail.', 'hello' => 'Bonjour', 'text' => 'Votre demande de rendez-vous a bien été reçue', 'at' => ' à ', 'colon' => '&nbsp;: ' ),
+        'es' => array( 'title' => 'Solicitud de cita recibida', 'sub' => 'Le confirmaré la cita por correo electrónico.', 'hello' => 'Hola', 'text' => 'Su solicitud de cita se ha recibido', 'at' => ' a las ', 'colon' => ': ' ),
+    );
+    $t    = $t[ $l ];
+    $slot = ( $date && $time ) ? $date . $t['at'] . $time : ( $date ? $date : $time );
+    $body = hdgavi_email_p( esc_html( $t['hello'] . ' ' . $visitor_name ) . ',' )
+        . hdgavi_email_p( esc_html( $t['text'] ) . ( '' !== (string) $slot ? $t['colon'] . '<strong>' . esc_html( $slot ) . '</strong>' : '' ) . '.' )
+        . hdgavi_email_signoff( $l )
+        . hdgavi_email_auto_note( $l );
+
+    return array(
+        'subject' => $t['title'] . ' — ' . $site_name,
+        'html'    => hdgavi_email_wrap( hdgavi_email_header( $t['title'], $t['sub'] ), $body, hdgavi_email_footer() ),
+    );
+}
+
+/**
+ * Acknowledgement sent to the visitor after the quote form.
+ * @return array( 'subject' => string, 'html' => string )
+ */
+function hdgavi_email_quote_ack( $visitor_name, $service_label, $site_name ) {
+    $l = hdgavi_email_lang();
+    $t = array(
+        'en' => array( 'title' => 'Quote request received', 'sub' => 'I will reply by e-mail.', 'hello' => 'Hello', 'about' => 'Your request about %s has been received.', 'plain' => 'Your request has been received.' ),
+        'fr' => array( 'title' => 'Demande de devis reçue', 'sub' => 'Je vous répondrai par e-mail.', 'hello' => 'Bonjour', 'about' => 'Votre demande concernant %s a bien été reçue.', 'plain' => 'Votre demande a bien été reçue.' ),
+        'es' => array( 'title' => 'Solicitud de presupuesto recibida', 'sub' => 'Le responderé por correo electrónico.', 'hello' => 'Hola', 'about' => 'Su solicitud sobre %s se ha recibido.', 'plain' => 'Su solicitud se ha recibido.' ),
+    );
+    $t    = $t[ $l ];
+    $line = '' !== (string) $service_label ? sprintf( esc_html( $t['about'] ), '<strong>' . esc_html( $service_label ) . '</strong>' ) : esc_html( $t['plain'] );
+    $body = hdgavi_email_p( esc_html( $t['hello'] . ' ' . $visitor_name ) . ',' )
+        . hdgavi_email_p( $line )
+        . hdgavi_email_signoff( $l )
+        . hdgavi_email_auto_note( $l );
+
+    return array(
+        'subject' => $t['title'] . ' — ' . $site_name,
+        'html'    => hdgavi_email_wrap( hdgavi_email_header( $t['title'], $t['sub'] ), $body, hdgavi_email_footer() ),
+    );
+}
+
+/* ---------------------------------------------------------------------------
+   4. CONTACT FORM HANDLER (replaces ajax-contact)
+   --------------------------------------------------------------------------- */
 
 /**
  * Check if this email has contacted before (for welcome email).
@@ -484,32 +768,25 @@ function hdgavi_process_booking_form() {
     $html_headers = array( 'Content-Type: text/html; charset=UTF-8', 'Reply-To: ' . str_replace( array( "\r", "\n", "\0" ), '', $name ) . ' <' . $email . '>' );
 
     // Build email
-    $header = hdgavi_email_header( 'Booking Request', 'New meeting request from your portfolio' );
-    $body_content = '<div style="padding:24px 32px">'
-        . '<table width="100%" cellpadding="8" cellspacing="0" border="0" style="font-size:14px;color:' . hdgavi_ec('text_body') . '">'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . ';width:100px">Name</td><td><strong>' . esc_html( $name ) . '</strong></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">Email</td><td><a href="mailto:' . esc_attr( $email ) . '" style="color:' . hdgavi_ec('accent') . '">' . esc_html( $email ) . '</a></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">Date</td><td><strong>' . esc_html( $date ) . '</strong></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">Time</td><td><strong>' . esc_html( $time ) . '</strong></td></tr>'
-        . ( $message ? '<tr><td style="color:' . hdgavi_ec('text_label') . '">Topic</td><td>' . nl2br( esc_html( $message ) ) . '</td></tr>' : '' )
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">IP</td><td style="font-size:11px;color:' . hdgavi_ec('text_muted') . '">' . esc_html( $ip ) . '</td></tr>'
-        . '</table></div>';
-    $body = hdgavi_email_wrap( $header, $body_content, hdgavi_email_footer() );
+    $rows = array(
+        array( 'Name', '<strong>' . esc_html( $name ) . '</strong>' ),
+        array( 'E-mail', hdgavi_email_link( 'mailto:' . $email, $email ) ),
+        array( 'Date', esc_html( $date ) ),
+        array( 'Time', esc_html( $time ) ),
+    );
+    if ( $message ) {
+        $rows[] = array( 'Topic', nl2br( esc_html( $message ) ) );
+    }
+    $rows[] = array( 'IP', hdgavi_email_mono( $ip ) );
+    $body   = hdgavi_email_admin_message( 'Meeting request', 'Sent through the booking form on the site.', $rows, '', '', 'Booking form' );
 
     $subject = '[Portfolio] Booking request from ' . $name;
     $success = wp_mail( $admin_email, $subject, $body, $html_headers );
     hdgavi_log_mail( $admin_email, $subject, $success );
 
     // Confirmation to visitor
-    $confirm_header = hdgavi_email_header( '✅ Booking Request Received', 'I\'ll confirm your meeting within 24 hours' );
-    $confirm_content = '<div style="padding:24px 32px;color:' . hdgavi_ec('text_body') . ';font-size:14px;line-height:1.7">'
-        . '<p>Hi <strong>' . esc_html( $name ) . '</strong>,</p>'
-        . '<p>Your booking request for <strong>' . esc_html( $date . ' at ' . $time ) . '</strong> has been received.</p>'
-        . '<p>I\'ll review my availability and confirm within 24 hours.</p>'
-        . '<p style="color:' . hdgavi_ec('text_label') . ';margin-top:20px">— ' . esc_html( $site_name ) . '</p>'
-        . '</div>';
-    $confirm_body = hdgavi_email_wrap( $confirm_header, $confirm_content, hdgavi_email_footer() );
-    $confirm_result = wp_mail( $email, 'Booking request received — ' . $site_name, $confirm_body, array( 'Content-Type: text/html; charset=UTF-8' ) );
+    $ack            = hdgavi_email_booking_ack( $name, $date, $time, $site_name );
+    $confirm_result = wp_mail( $email, $ack['subject'], $ack['html'], array( 'Content-Type: text/html; charset=UTF-8' ) );
     hdgavi_log_mail( $email, 'Booking request received', $confirm_result );
 
     $success ? wp_send_json_success( array( 'message' => 'OK' ) ) : wp_send_json_error( array( 'message' => 'Send error.' ) );
@@ -547,33 +824,24 @@ function hdgavi_process_quote_form() {
     $service_labels = array( 'devops-consulting' => 'DevOps Consulting', 'security-audit' => 'Security Audit', 'training' => 'Training / Formation', 'other' => 'Other' );
     $service_label = $service_labels[ $service ] ?? $service;
 
-    $q_header = hdgavi_email_header( 'Quote Request', 'New service inquiry from your portfolio' );
-    $q_body = '<div style="padding:24px 32px">'
-        . '<table width="100%" cellpadding="8" cellspacing="0" border="0" style="font-size:14px;color:' . hdgavi_ec('text_body') . '">'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . ';width:100px">Name</td><td><strong>' . esc_html( $name ) . '</strong></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">Email</td><td><a href="mailto:' . esc_attr( $email ) . '" style="color:' . hdgavi_ec('accent') . '">' . esc_html( $email ) . '</a></td></tr>'
-        . ( $company ? '<tr><td style="color:' . hdgavi_ec('text_label') . '">Company</td><td>' . esc_html( $company ) . '</td></tr>' : '' )
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">Service</td><td><strong>' . esc_html( $service_label ) . '</strong></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '" colspan="2">Project description</td></tr>'
-        . '<tr><td colspan="2" style="background:' . hdgavi_ec('surface_alt') . ';border-radius:8px;padding:12px">' . nl2br( esc_html( $message ) ) . '</td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">IP</td><td style="font-size:11px;color:' . hdgavi_ec('text_muted') . '">' . esc_html( $ip ) . '</td></tr>'
-        . '</table></div>';
-    $body = hdgavi_email_wrap( $q_header, $q_body, hdgavi_email_footer() );
+    $rows = array(
+        array( 'Name', '<strong>' . esc_html( $name ) . '</strong>' ),
+        array( 'E-mail', hdgavi_email_link( 'mailto:' . $email, $email ) ),
+    );
+    if ( $company ) {
+        $rows[] = array( 'Company', esc_html( $company ) );
+    }
+    $rows[] = array( 'Service', '<strong>' . esc_html( $service_label ) . '</strong>' );
+    $rows[] = array( 'IP', hdgavi_email_mono( $ip ) );
+    $body   = hdgavi_email_admin_message( 'Quote request', 'Sent through the quote form on the site.', $rows, 'Project description', $message, 'Quote form' );
 
     $subject = '[Portfolio] Quote request — ' . $service_label . ' — ' . $name;
     $success = wp_mail( $admin_email, $subject, $body, $html_headers );
     hdgavi_log_mail( $admin_email, $subject, $success );
 
     // Confirmation to visitor
-    $qc_header = hdgavi_email_header( '✅ Quote Request Received', 'I\'ll get back to you within 48 hours' );
-    $qc_body = '<div style="padding:24px 32px;color:' . hdgavi_ec('text_body') . ';font-size:14px;line-height:1.7">'
-        . '<p>Hi <strong>' . esc_html( $name ) . '</strong>,</p>'
-        . '<p>Your quote request for <strong>' . esc_html( $service_label ) . '</strong> has been received.</p>'
-        . '<p>I\'ll review your project description and respond within 48 hours.</p>'
-        . '<p style="color:' . hdgavi_ec('text_label') . ';margin-top:20px">— ' . esc_html( $site_name ) . '</p>'
-        . '</div>';
-    $confirm_body = hdgavi_email_wrap( $qc_header, $qc_body, hdgavi_email_footer() );
-    $confirm_result = wp_mail( $email, 'Quote request received — ' . $site_name, $confirm_body, array( 'Content-Type: text/html; charset=UTF-8' ) );
+    $ack            = hdgavi_email_quote_ack( $name, $service_label, $site_name );
+    $confirm_result = wp_mail( $email, $ack['subject'], $ack['html'], array( 'Content-Type: text/html; charset=UTF-8' ) );
     hdgavi_log_mail( $email, 'Quote request received', $confirm_result );
 
     $success ? wp_send_json_success( array( 'message' => 'OK' ) ) : wp_send_json_error( array( 'message' => 'Send error.' ) );
@@ -606,16 +874,12 @@ function hdgavi_process_maintenance_form() {
     $ip           = hdgavi_get_client_ip();
     $html_headers = array( 'Content-Type: text/html; charset=UTF-8', 'Reply-To: ' . str_replace( array( "\r", "\n", "\0" ), '', $name ) . ' <' . $email . '>' );
 
-    $m_header = hdgavi_email_header( 'Maintenance Contact', 'Someone reached out while site is under construction' );
-    $m_body = '<div style="padding:24px 32px">'
-        . '<table width="100%" cellpadding="8" cellspacing="0" border="0" style="font-size:14px;color:' . hdgavi_ec('text_body') . '">'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . ';width:80px">Name</td><td><strong>' . esc_html( $name ) . '</strong></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">Email</td><td><a href="mailto:' . esc_attr( $email ) . '" style="color:' . hdgavi_ec('accent') . '">' . esc_html( $email ) . '</a></td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '" colspan="2">Message</td></tr>'
-        . '<tr><td colspan="2" style="background:' . hdgavi_ec('surface_alt') . ';border-radius:8px;padding:12px">' . nl2br( esc_html( $message ) ) . '</td></tr>'
-        . '<tr><td style="color:' . hdgavi_ec('text_label') . '">IP</td><td style="font-size:11px;color:' . hdgavi_ec('text_muted') . '">' . esc_html( $ip ) . '</td></tr>'
-        . '</table></div>';
-    $body = hdgavi_email_wrap( $m_header, $m_body, hdgavi_email_footer() );
+    $rows = array(
+        array( 'Name', '<strong>' . esc_html( $name ) . '</strong>' ),
+        array( 'E-mail', hdgavi_email_link( 'mailto:' . $email, $email ) ),
+        array( 'IP', hdgavi_email_mono( $ip ) ),
+    );
+    $body = hdgavi_email_admin_message( 'Message from the maintenance page', 'Sent while the site was in maintenance mode.', $rows, 'Message', $message, 'Maintenance page' );
 
     $subject = '[Portfolio] Maintenance contact from ' . $name;
     $success = wp_mail( $admin_email, $subject, $body, $html_headers );
@@ -635,36 +899,43 @@ function hdgavi_do_send_followup_emails( $data ) {
     $is_first  = $data['is_first'];
     $lang      = $data['lang'] ?? hdgavi_opt( 'default_lang', 'en' );
     $site_name = $data['site_name'];
+    $l         = in_array( $lang, array( 'fr', 'es' ), true ) ? $lang : 'en';
 
     $html_headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
     // Confirmation
-    $confirm_subject = $lang === 'fr'
-        ? hdgavi_opt( 'email_confirm_subject_fr', 'Message bien reçu ! — ' . $site_name )
-        : hdgavi_opt( 'email_confirm_subject_en', 'Message received! — ' . $site_name );
+    $confirm_subject = hdgavi_email_pick( array(
+        'en' => hdgavi_email_text( 'email_confirm_subject_en', 'Message received — ' . $site_name ),
+        'fr' => hdgavi_email_text( 'email_confirm_subject_fr', 'Message reçu — ' . $site_name ),
+        'es' => hdgavi_email_text( 'email_confirm_subject_es', 'Mensaje recibido — ' . $site_name ),
+    ), $l );
     hdgavi_log_mail( $email, $confirm_subject, wp_mail( $email, $confirm_subject, hdgavi_email_confirmation( $name ), $html_headers ) );
 
     // Welcome (first contact only — disabled by default for GDPR compliance)
     if ( $is_first && hdgavi_opt( 'email_welcome_enabled', false ) ) {
-        $welcome_subject = $lang === 'fr'
-            ? hdgavi_opt( 'email_welcome_subject_fr', 'Bienvenue ! — ' . $site_name )
-            : hdgavi_opt( 'email_welcome_subject_en', 'Welcome! — ' . $site_name );
+        $welcome_subject = hdgavi_email_pick( array(
+            'en' => hdgavi_email_text( 'email_welcome_subject_en', 'Introduction — ' . $site_name ),
+            'fr' => hdgavi_email_text( 'email_welcome_subject_fr', 'Présentation — ' . $site_name ),
+            'es' => hdgavi_email_text( 'email_welcome_subject_es', 'Presentación — ' . $site_name ),
+        ), $l );
         hdgavi_log_mail( $email, $welcome_subject, wp_mail( $email, $welcome_subject, hdgavi_email_welcome( $name ), $html_headers ) );
     }
 
     // Mini CV (disabled by default for GDPR compliance)
     if ( hdgavi_opt( 'email_cv_enabled', false ) ) {
-        $cv_subject = $lang === 'fr'
-            ? hdgavi_opt( 'email_cv_subject_fr', 'Un peu plus sur moi — ' . $site_name )
-            : hdgavi_opt( 'email_cv_subject_en', 'A bit more about me — ' . $site_name );
+        $cv_subject = hdgavi_email_pick( array(
+            'en' => hdgavi_email_text( 'email_cv_subject_en', 'Summary of my CV — ' . $site_name ),
+            'fr' => hdgavi_email_text( 'email_cv_subject_fr', 'Résumé de mon CV — ' . $site_name ),
+            'es' => hdgavi_email_text( 'email_cv_subject_es', 'Resumen de mi CV — ' . $site_name ),
+        ), $l );
         hdgavi_log_mail( $email, $cv_subject, wp_mail( $email, $cv_subject, hdgavi_email_minicv( $name ), $html_headers ) );
     }
 }
 add_action( 'hdgavi_send_followup_emails', 'hdgavi_do_send_followup_emails' );
 
-/* ═══════════════════════════════════════
-   4. WP MAIL SMTP CONFIGURATION HELPER
-   ═══════════════════════════════════════ */
+/* ---------------------------------------------------------------------------
+   5. WP MAIL SMTP CONFIGURATION HELPER
+   --------------------------------------------------------------------------- */
 
 /**
  * Set From name and email for all outgoing emails
